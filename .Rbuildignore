@@ -6,3 +6,4 @@
 ^appveyor\.yml$
 ^LICENSE\.md$
 ^ISSUE_TEMPLATE\.md$
+^cleanup.R$

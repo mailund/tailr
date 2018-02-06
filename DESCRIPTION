@@ -9,7 +9,10 @@ Encoding: UTF-8
 LazyData: true
 ByteCompile: true
 Depends: 
-    R (>= 3.1)
+    R (>= 3.1),
+    rlang,
+    assertthat,
+    glue
 Suggests: 
     covr,
     testthat
