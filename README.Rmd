@@ -51,8 +51,8 @@ We can take a classical recursive function and write it in a tail-recursive form
 
 ```{r}
 factorial <- function(n, acc = 1) {
-    if (n <= 1) { acc }
-    else { factorial(n - 1, acc * n) }
+    if (n <= 1) acc
+    else factorial(n - 1, acc * n)
 }
 ```
 

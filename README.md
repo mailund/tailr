@@ -46,8 +46,8 @@ tail-recursive form using an accumulator:
 
 ``` r
 factorial <- function(n, acc = 1) {
-    if (n <= 1) { acc }
-    else { factorial(n - 1, acc * n) }
+    if (n <= 1) acc
+    else factorial(n - 1, acc * n)
 }
 ```
 
@@ -84,9 +84,9 @@ n <- 100
 microbenchmark::microbenchmark(factorial(n), loop_factorial(n), tr_loop_factorial(n))
 #> Unit: microseconds
 #>                  expr    min      lq     mean  median      uq      max
-#>          factorial(n) 54.160 54.7920 78.04577 55.4230 57.0595 2010.211
-#>     loop_factorial(n)  4.895  5.0455 29.81842  5.1555  5.3450 2456.944
-#>  tr_loop_factorial(n)  9.263  9.8165 34.28456 10.3640 10.7810 2326.050
+#>          factorial(n) 53.177 54.8510 76.17915 56.8880 64.7175 1616.485
+#>     loop_factorial(n)  4.878  4.9425 33.33417  5.1370  5.2465 2820.040
+#>  tr_loop_factorial(n)  8.963  9.3505 33.13009 10.2955 14.3730 2163.053
 #>  neval
 #>    100
 #>    100
