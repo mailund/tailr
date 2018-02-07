@@ -4,9 +4,25 @@
 # other than satisfying CHECK, I'm not using these imports since I qualify the functions
 # by their namespace.
 
+# FIXME: replace these with the rlang:: versions once the 1.7 release is out
+FIXME_rlang_call_name <- function (call)
+{
+    call <- rlang::get_expr(call)
+    if (!rlang::is_call(call)) {
+        abort("`call` must be a call or must wrap a call (e.g. in a quosure)")
+    }
+    as.character(call[[1]])
+}
+FIXME_rlang_call_args <- function (call)
+{
+    call <- rlang::get_expr(call)
+    args <- as.list(call[-1])
+    rlang::set_names((args), rlang::names2(args))
+}
+# FIXME: end rlang
 
-can_call_be_transformed <- function(
-                                    call_name, call_arguments,
+
+can_call_be_transformed <- function(call_name, call_arguments,
                                     fun_name, fun_call_allowed, cc) {
     switch(call_name,
         "if" = {
@@ -50,8 +66,8 @@ can_transform_rec <- function(expr, fun_name, fun_call_allowed, cc) {
         return(TRUE)
     } else {
         stopifnot(rlang::is_lang(expr))
-        call_name <- rlang::call_name(expr)
-        call_arguments <- rlang::call_args(expr)
+        call_name <- FIXME_rlang_call_name(expr)
+        call_arguments <- FIXME_rlang_call_args(expr)
         can_call_be_transformed(call_name, call_arguments, fun_name, fun_call_allowed, cc)
     }
 }
