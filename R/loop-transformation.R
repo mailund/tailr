@@ -253,7 +253,7 @@ translate_recursive_call_into_next <- function(recursive_call, fun) {
                  rlang::sym(variables[[i]]),
                  rlang::sym(new_vars[[i]]))
     }
-    #recursive_call <- c(recursive_call, `next`)
+
     as.call(c(rlang::sym("{"), new_assignments, assignments, `next`))
 }
 
@@ -288,9 +288,34 @@ transform_recursive_calls <- function(expr, fun_name, fun) {
     }
 }
 
+
+#' If a call is `{` and has a single expression inside it, replace it with that expression.
+#' @param expr The expression to rewrite
+#' @return The new expression
+simplify_nested_blocks <- function(expr) {
+    if (rlang::is_atomic(expr) || rlang::is_pairlist(expr) ||
+        rlang::is_symbol(expr) || rlang::is_primitive(expr)) {
+        expr
+
+    } else {
+        stopifnot(rlang::is_lang(expr))
+        call_name <- FIXME_rlang_call_name(expr)
+        if (call_name == "{" && length(expr) == 2) {
+            simplify_nested_blocks(expr[[2]])
+        } else {
+            args <- FIXME_rlang_call_args(expr)
+            for (i in seq_along(args)) {
+                expr[[i + 1]] <- simplify_nested_blocks(args[[i]])
+            }
+            expr
+        }
+    }
+}
+
 build_transformed_function <- function(fun_expr, fun_name, fun) {
     fun_expr <- make_returns_explicit(fun_expr, FALSE)
     fun_expr <- transform_recursive_calls(fun_expr, fun_name, fun)
+    fun_expr <- simplify_nested_blocks(fun_expr)
     rlang::call2("repeat", fun_expr)
 }
 
