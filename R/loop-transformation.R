@@ -5,16 +5,14 @@
 # by their namespace.
 
 # FIXME: replace these with the rlang:: versions once the 1.7 release is out
-FIXME_rlang_call_name <- function (call)
-{
+FIXME_rlang_call_name <- function(call) {
     call <- rlang::get_expr(call)
     if (!rlang::is_lang(call)) {
         abort("`call` must be a call or must wrap a call (e.g. in a quosure)")
     }
     as.character(call[[1]])
 }
-FIXME_rlang_call_args <- function (call)
-{
+FIXME_rlang_call_args <- function(call) {
     call <- rlang::get_expr(call)
     args <- as.list(call[-1])
     rlang::set_names((args), rlang::names2(args))
@@ -167,13 +165,15 @@ transform <- function(fun) {
     fun_q <- rlang::enquo(fun)
     fun <- rlang::eval_tidy(fun)
     if (!can_transform_(fun_q)) {
-        warning("Could not build a transformed graph.")
+        warning("Could not build a transformed function")
         return(fun)
     }
 
     fun_name <- rlang::quo_name(fun_q)
     new_fun_body <- build_transformed_function(body(fun), fun_name)
-    rlang::new_function(args = formals(fun),
-                        body = new_fun_body,
-                        env = rlang::get_env(fun_q))
+    rlang::new_function(
+        args = formals(fun),
+        body = new_fun_body,
+        env = rlang::get_env(fun_q)
+    )
 }
