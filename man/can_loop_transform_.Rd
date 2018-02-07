@@ -12,7 +12,7 @@ can_loop_transform_(fun)
 \description{
 This function analyses a recursive function to check if we can transform it into
 a loop or trampoline version with \code{\link{transform}}. This version expects the
-function to be provided as a quosure, but see also \code{\link{can_transform}}.
+function to be provided as a quosure, but see also \code{\link{can_loop_transform}}.
 }
 \details{
 Since this function needs to handle recursive functions, it needs to know the name of
@@ -24,7 +24,7 @@ factorial <- function(n)
 factorial_acc <- function(n, acc = 1)
     if (n <= 1) acc else factorial_acc(n - 1, n * acc)
 
-can_transform_(rlang::quo(factorial))     # FALSE -- and prints a warning
-can_transform_(rlang::quo(factorial_acc)) # TRUE
+can_loop_transform_(rlang::quo(factorial))     # FALSE -- and prints a warning
+can_loop_transform_(rlang::quo(factorial_acc)) # TRUE
 
 }

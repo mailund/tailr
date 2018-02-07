@@ -1,10 +1,6 @@
-# I need to import these for CHECK to work, so I might as well do it here...
-#' @import glue
-#' @import rlang
-# other than satisfying CHECK, I'm not using these imports since I qualify the functions
-# by their namespace.
 
 # FIXME: replace these with the rlang:: versions once the 1.7 release is out
+# Functions to be replaced later.
 FIXME_rlang_call_name <- function(call) {
     call <- rlang::get_expr(call)
     if (!rlang::is_lang(call)) {
@@ -21,6 +17,12 @@ FIXME_rlang_call_args <- function(call) {
 
 ## Test for possibility of transformation #########################################
 
+# I need to import these for CHECK to work, so I might as well do it here...
+# Other than satisfying CHECK, I'm not using these imports since I qualify the functions
+# by their namespace.
+
+#' @import glue
+#' @import rlang
 can_call_be_transformed <- function(call_name, call_arguments,
                                     fun_name, fun_call_allowed, cc) {
     switch(call_name,
@@ -89,7 +91,7 @@ can_transform_rec <- function(expr, fun_name, fun_call_allowed, cc) {
 #'
 #' This function analyses a recursive function to check if we can transform it into
 #' a loop or trampoline version with \code{\link{transform}}. This version expects the
-#' function to be provided as a quosure, but see also \code{\link{can_transform}}.
+#' function to be provided as a quosure, but see also \code{\link{can_loop_transform}}.
 #'
 #' Since this function needs to handle recursive functions, it needs to know the name of
 #' its input function, so this must be provided as a bare symbol.
@@ -102,8 +104,8 @@ can_transform_rec <- function(expr, fun_name, fun_call_allowed, cc) {
 #' factorial_acc <- function(n, acc = 1)
 #'     if (n <= 1) acc else factorial_acc(n - 1, n * acc)
 #'
-#' can_transform_(rlang::quo(factorial))     # FALSE -- and prints a warning
-#' can_transform_(rlang::quo(factorial_acc)) # TRUE
+#' can_loop_transform_(rlang::quo(factorial))     # FALSE -- and prints a warning
+#' can_loop_transform_(rlang::quo(factorial_acc)) # TRUE
 #'
 #' @export
 can_loop_transform_ <- function(fun) {
@@ -112,7 +114,7 @@ can_loop_transform_ <- function(fun) {
         error <- simpleError(
             glue::glue(
                 "Since we need to recognise recursion, we can only manipulate ",
-                "functions provided to can_transform by name.\n",
+                "functions provided to can_loop_transform by name.\n",
                 "Use a bare symbol."
             ),
             call = match.call()
@@ -124,7 +126,7 @@ can_loop_transform_ <- function(fun) {
     if (!rlang::is_closure(fun)) {
         error <- simpleError(
             glue::glue(
-                "The function provided to can_transform must be a user-defined function.\n",
+                "The function provided to can_loop_transform must be a user-defined function.\n",
                 "Instead, it is {fun_name} == {deparse(fun)}."
             ),
             call = match.call()
@@ -151,8 +153,8 @@ can_loop_transform_ <- function(fun) {
 #' factorial_acc <- function(n, acc = 1)
 #'     if (n <= 1) acc else factorial_acc(n - 1, n * acc)
 #'
-#' can_transform(factorial)     # FALSE -- and prints a warning
-#' can_transform(factorial_acc) # TRUE
+#' can_loop_transform(factorial)     # FALSE -- and prints a warning
+#' can_loop_transform(factorial_acc) # TRUE
 #'
 #' @export
 can_loop_transform <- function(fun) {
