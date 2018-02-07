@@ -25,8 +25,9 @@ knitr::opts_chunk$set(
 [![Coverage status](http://coveralls.io/repos/github/mailund/tailr/badge.svg?branch=master)](https://coveralls.io/github/mailund/tailr?branch=master)
 
 [![minimal R version](https://img.shields.io/badge/R%3E%3D-3.1-blue.svg)](https://cran.r-project.org/)
-[![CRAN_Status_Badge](http://www.r-pkg.org/badges/version/tailr)](https://cran.r-project.org/package=tailr)
 [![packageversion](https://img.shields.io/badge/Package%20version-0.0.0.9000-orange.svg?style=flat-square)](commits/master)
+<!--[![CRAN_Status_Badge](http://www.r-pkg.org/badges/version/tailr)](https://cran.r-project.org/package=tailr)
+-->
  
 ---
  
@@ -43,3 +44,40 @@ You can install tailr from GitHub with:
 devtools::install_github("mailund/tailr")
 ```
 
+
+## Examples
+
+We can take a classical recursive function and write it in a tail-recursive form using an accumulator:
+
+```{r}
+factorial <- function(n, acc = 1) {
+    if (n <= 1) { acc }
+    else { factorial(n - 1, acc * n) }
+}
+```
+
+We can then, automatically, translate that into a looping version:
+
+```{r}
+tr_loop_factorial <- tailr::loop_transform(factorial)
+tr_loop_factorial
+```
+
+We can then compare the running time with the recursive function and a version that is written using a loop:
+
+```{r}
+loop_factorial <- function(n) {
+    val <- 1
+    while (n > 1) {
+        val <- n * val
+        n <- n - 1
+    }
+    val
+}
+
+
+n <- 100
+microbenchmark::microbenchmark(factorial(n), loop_factorial(n), tr_loop_factorial(n))
+```
+
+There is some overhead in the translated version. I believe this is the parallel assignments that replace the recursive call, see Issue #7.

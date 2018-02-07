@@ -21,8 +21,9 @@ status](http://coveralls.io/repos/github/mailund/tailr/badge.svg?branch=master)]
 
 [![minimal R
 version](https://img.shields.io/badge/R%3E%3D-3.1-blue.svg)](https://cran.r-project.org/)
-[![CRAN\_Status\_Badge](http://www.r-pkg.org/badges/version/tailr)](https://cran.r-project.org/package=tailr)
 [![packageversion](https://img.shields.io/badge/Package%20version-0.0.0.9000-orange.svg?style=flat-square)](commits/master)
+<!--[![CRAN_Status_Badge](http://www.r-pkg.org/badges/version/tailr)](https://cran.r-project.org/package=tailr)
+-->
 
 -----
 
@@ -37,3 +38,60 @@ You can install tailr from GitHub with:
 # install.packages("devtools")
 devtools::install_github("mailund/tailr")
 ```
+
+## Examples
+
+We can take a classical recursive function and write it in a
+tail-recursive form using an accumulator:
+
+``` r
+factorial <- function(n, acc = 1) {
+    if (n <= 1) { acc }
+    else { factorial(n - 1, acc * n) }
+}
+```
+
+We can then, automatically, translate that into a looping version:
+
+``` r
+tr_loop_factorial <- tailr::loop_transform(factorial)
+tr_loop_factorial
+#> function (n, acc = 1) 
+#> repeat if (n <= 1) return(acc) else {
+#>     ..n <- n - 1
+#>     ..acc <- acc * n
+#>     n <- ..n
+#>     acc <- ..acc
+#>     .Primitive("next")
+#> }
+```
+
+We can then compare the running time with the recursive function and a
+version that is written using a loop:
+
+``` r
+loop_factorial <- function(n) {
+    val <- 1
+    while (n > 1) {
+        val <- n * val
+        n <- n - 1
+    }
+    val
+}
+
+
+n <- 100
+microbenchmark::microbenchmark(factorial(n), loop_factorial(n), tr_loop_factorial(n))
+#> Unit: microseconds
+#>                  expr    min      lq     mean  median      uq      max
+#>          factorial(n) 54.160 54.7920 78.04577 55.4230 57.0595 2010.211
+#>     loop_factorial(n)  4.895  5.0455 29.81842  5.1555  5.3450 2456.944
+#>  tr_loop_factorial(n)  9.263  9.8165 34.28456 10.3640 10.7810 2326.050
+#>  neval
+#>    100
+#>    100
+#>    100
+```
+
+There is some overhead in the translated version. I believe this is the
+parallel assignments that replace the recursive call, see Issue \#7.

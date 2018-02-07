@@ -15,5 +15,6 @@ Depends:
     glue
 Suggests: 
     covr,
-    testthat
+    testthat,
+    microbenchmark
 RoxygenNote: 6.0.1
