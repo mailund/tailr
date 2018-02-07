@@ -2,6 +2,5 @@
 
 export(can_transform)
 export(transform)
-importFrom(assertthat,assert_that)
-importFrom(glue,glue)
-importFrom(rlang,enquo)
+import(glue)
+import(rlang)

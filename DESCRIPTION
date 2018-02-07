@@ -11,8 +11,7 @@ LazyData: true
 ByteCompile: true
 Depends: 
     R (>= 3.1),
-    rlang,
-    assertthat,
+    rlang (>= 0.1.5),
     glue
 Suggests: 
     covr,

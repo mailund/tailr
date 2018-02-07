@@ -1,7 +1,6 @@
 # I need to import these for CHECK to work, so I might as well do it here...
-#' @importFrom assertthat assert_that
-#' @importFrom glue glue
-#' @importFrom rlang enquo
+#' @import glue
+#' @import rlang
 # other than satisfying CHECK, I'm not using these imports since I qualify the functions
 # by their namespace.
 
@@ -50,7 +49,7 @@ can_transform_rec <- function(expr, fun_name, fun_call_allowed, cc) {
         rlang::is_symbol(expr) || rlang::is_primitive(expr)) {
         return(TRUE)
     } else {
-        assertthat::assert_that(rlang::is_call(expr))
+        stopifnot(rlang::is_call(expr))
         call_name <- rlang::call_name(expr)
         call_arguments <- rlang::call_args(expr)
         can_call_be_transformed(call_name, call_arguments, fun_name, fun_call_allowed, cc)
@@ -125,12 +124,12 @@ transform <- function(fun, new_name) {
     # FIXME: better error handling.
 
     fun <- rlang::enquo(fun)
-    assertthat::assert_that(rlang::is_symbol(fun))
+    stopifnot(rlang::is_symbol(fun))
     new_name <- rlang::quo_name(fun)
 
     if (!missing(new_name)) {
         new_name <- rlang::enexpr(new_name)
-        assertthat::assert_that(rlang::is_symbol(new_name))
+        stopifnot(rlang::is_symbol(new_name))
         new_name <- rlang::as_character(new_name)
     }
 
