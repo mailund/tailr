@@ -24,6 +24,14 @@ FIXME_rlang_call_args <- function(call) {
 can_call_be_transformed <- function(call_name, call_arguments,
                                     fun_name, fun_call_allowed, cc) {
     switch(call_name,
+           # Code blocks -- don't consider those calls.
+           "{" = {
+               for (arg in call_arguments) {
+                   can_transform_rec(arg, fun_name, fun_call_allowed, cc)
+               }
+           },
+
+           # Selection
         "if" = {
             can_transform_rec(call_arguments[[1]], fun_name, fun_call_allowed, cc)
             can_transform_rec(call_arguments[[2]], fun_name, TRUE, cc)
@@ -31,6 +39,7 @@ can_call_be_transformed <- function(call_name, call_arguments,
                 can_transform_rec(call_arguments[[3]], fun_name, TRUE, cc)
         },
 
+        # Loops
         "for" = {
             warning("We can't yet handle loops.")
             cc(FALSE)
@@ -42,7 +51,10 @@ can_call_be_transformed <- function(call_name, call_arguments,
         "repeat" = {
             warning("We can't yet handle loops.")
             cc(FALSE)
-        }, {
+        },
+
+        # All other calls
+        {
             if (call_name == fun_name && !fun_call_allowed) {
                 warn_msg <- simpleWarning(
                     "The function cannot be transformed since it contains a recursive call inside a call.",
@@ -212,9 +224,74 @@ make_returns_explicit <- function(expr, in_function_parameter) {
     }
 }
 
-build_transformed_function <- function(fun_expr, fun_name) {
+#' Translate a return(<recursive-function-call>) expressions into
+#' a block that assigns the parameters to local variables and call `continue`.
+#'
+#' @param recursive_call The call object where we get the parameters
+#' @param fun The actual function -- we use this for the call to `match.call`.
+#' @return The rewritten expression
+translate_recursive_call_into_next <- function(recursive_call, fun) {
+    expanded_call <- match.call(definition = fun, call = recursive_call)
+    assignments <- as.list(expanded_call)[-1]
+    variables <- names(assignments)
+
+    # We cannot do a simple loop and assign expressions to the local variables.
+    # If we did, the order of assignments might matter. We need a parallel
+    # assignment.
+    new_vars <- vector("character", length = length(assignments))
+    new_assignments <- vector("list", length = length(assignments))
+    for (i in seq_along(assignments)) {
+        new_vars[[i]] <- paste0("..", variables[[i]])
+        new_assignments[[i]] <-
+            call("<-",
+                 rlang::sym(new_vars[[i]]),
+                 assignments[[i]])
+    }
+    for (i in seq_along(assignments)) {
+        assignments[[i]] <-
+            call("<-",
+                 rlang::sym(variables[[i]]),
+                 rlang::sym(new_vars[[i]]))
+    }
+    #recursive_call <- c(recursive_call, `next`)
+    as.call(c(rlang::sym("{"), new_assignments, assignments, `next`))
+}
+
+#' Translate all return(<recursive-function-call>) expressions into
+#' a block that assigns the parameters to local variables.
+#'
+#' @param expr The expression to rewrite
+#' @param fun_name The name of the recursive function we are rewriting
+#' @param fun The actual function -- we use this for the call to `match.call`.
+#' @return The rewritten expression
+transform_recursive_calls <- function(expr, fun_name, fun) {
+    if (rlang::is_atomic(expr) || rlang::is_pairlist(expr) ||
+        rlang::is_symbol(expr) || rlang::is_primitive(expr)) {
+        expr
+
+    } else {
+        stopifnot(rlang::is_lang(expr))
+        call_name <- FIXME_rlang_call_name(expr)
+        if (call_name == "return") {
+            if (rlang::is_lang(expr[[2]])) {
+                call_name <- FIXME_rlang_call_name(expr[[2]])
+                if (call_name == fun_name) {
+                    return(translate_recursive_call_into_next(expr[[2]], fun))
+                }
+            }
+        }
+        expr_args <- FIXME_rlang_call_args(expr)
+        for (i in seq_along(expr_args)) {
+            expr[[i + 1]] <- transform_recursive_calls(expr_args[[i]], fun_name, fun)
+        }
+        expr
+    }
+}
+
+build_transformed_function <- function(fun_expr, fun_name, fun) {
     fun_expr <- make_returns_explicit(fun_expr, FALSE)
-    rlang::call2("while",  TRUE, fun_expr) # FIXME
+    fun_expr <- transform_recursive_calls(fun_expr, fun_name, fun)
+    rlang::call2("repeat", fun_expr)
 }
 
 #' Transform a function from recursive to looping.
@@ -234,7 +311,7 @@ loop_transform <- function(fun) {
     }
 
     fun_name <- rlang::quo_name(fun_q)
-    new_fun_body <- build_transformed_function(body(fun), fun_name)
+    new_fun_body <- build_transformed_function(body(fun), fun_name, fun)
     rlang::new_function(
         args = formals(fun),
         body = new_fun_body,
