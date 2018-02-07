@@ -49,7 +49,7 @@ can_transform_rec <- function(expr, fun_name, fun_call_allowed, cc) {
         rlang::is_symbol(expr) || rlang::is_primitive(expr)) {
         return(TRUE)
     } else {
-        stopifnot(rlang::is_call(expr))
+        stopifnot(rlang::is_lang(expr))
         call_name <- rlang::call_name(expr)
         call_arguments <- rlang::call_args(expr)
         can_call_be_transformed(call_name, call_arguments, fun_name, fun_call_allowed, cc)
