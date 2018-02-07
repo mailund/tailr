@@ -6,6 +6,7 @@ Description: This package implements meta-programming functions for automaticall
 Authors@R: person("Thomas", "Mailund", , "mailund@birc.au.dk", c("aut", "cre"))
 License: GPL-3
 Encoding: UTF-8
+Language: en-GB
 LazyData: true
 ByteCompile: true
 Depends: 

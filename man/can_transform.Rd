@@ -10,14 +10,18 @@ can_transform(fun)
 \item{fun}{The function to check. Must be provided by its (bare symbol) name.}
 }
 \description{
-Tests if a function, provided by its name, can be transformed.
+This function analyses a recursive function to check if we can transform it into
+a loop or trampoline version with \code{\link{transform}}. Since this function needs to handle
+recursive functions, it needs to know the name of its input function, so this must be
+provided as a bare symbol.
 }
 \examples{
 factorial <- function(n)
     if (n <= 1) 1 else n * factorial(n - 1)
 factorial_acc <- function(n, acc = 1)
     if (n <= 1) acc else factorial_acc(n - 1, n * acc)
-can_transform(factorial) # FALSE
+
+can_transform(factorial) # FALSE -- and prints a warning
 can_transform(factorial_acc) # TRUE
 
 }
