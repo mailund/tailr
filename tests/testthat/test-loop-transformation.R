@@ -55,3 +55,13 @@ test_that("we can transform a simple function", {
         expect_equal(factorial_acc(i), transformed(i))
     }
 })
+
+test_that("we cannot transform a non-tail-recursive function", {
+    factorial <- function(n, acc = 1)
+        if (n <= 1) acc else n * factorial(n - 1)
+
+    expect_warning(
+        expect_equal(factorial, transform(factorial)),
+        "Could not build .*"
+    )
+})
