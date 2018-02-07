@@ -44,3 +44,14 @@ test_that("We report errors gracefully", {
         "We can't .*"
     )
 })
+
+test_that("we can transform a simple function", {
+    factorial_acc <- function(n, acc = 1)
+        if (n <= 1) acc else factorial_acc(n - 1, n * acc)
+
+    transformed <- transform(factorial_acc)
+
+    for (i in 1:10) {
+        expect_equal(factorial_acc(i), transformed(i))
+    }
+})

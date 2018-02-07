@@ -21,6 +21,7 @@ FIXME_rlang_call_args <- function (call)
 }
 # FIXME: end rlang
 
+## Test for possibility of transformation #########################################
 
 can_call_be_transformed <- function(call_name, call_arguments,
                                     fun_name, fun_call_allowed, cc) {
@@ -72,12 +73,15 @@ can_transform_rec <- function(expr, fun_name, fun_call_allowed, cc) {
     }
 }
 
+
 #' Tests if a function, provided by its name, can be transformed.
 #'
 #' This function analyses a recursive function to check if we can transform it into
-#' a loop or trampoline version with \code{\link{transform}}. Since this function needs to handle
-#' recursive functions, it needs to know the name of its input function, so this must be
-#' provided as a bare symbol.
+#' a loop or trampoline version with \code{\link{transform}}. This version expects the
+#' function to be provided as a quosure, but see also \code{\link{can_transform}}.
+#'
+#' Since this function needs to handle recursive functions, it needs to know the name of
+#' its input function, so this must be provided as a bare symbol.
 #'
 #' @param fun The function to check. Must be provided by its (bare symbol) name.
 #'
@@ -87,13 +91,11 @@ can_transform_rec <- function(expr, fun_name, fun_call_allowed, cc) {
 #' factorial_acc <- function(n, acc = 1)
 #'     if (n <= 1) acc else factorial_acc(n - 1, n * acc)
 #'
-#' can_transform(factorial) # FALSE -- and prints a warning
-#' can_transform(factorial_acc) # TRUE
+#' can_transform_(rlang::quo(factorial))     # FALSE -- and prints a warning
+#' can_transform_(rlang::quo(factorial_acc)) # TRUE
 #'
 #' @export
-can_transform <- function(fun) {
-    fun <- rlang::enquo(fun)
-
+can_transform_ <- function(fun) {
     fun_name <- rlang::get_expr(fun)
     if (!rlang::is_symbol(fun_name)) {
         error <- simpleError(
@@ -122,38 +124,56 @@ can_transform <- function(fun) {
     callCC(function(cc) can_transform_rec(body(fun), fun_name, TRUE, cc))
 }
 
-build_transformed_function <- function(fun_expr, new_name) {
+
+#' Tests if a function, provided by its name, can be transformed.
+#'
+#' This function analyses a recursive function to check if we can transform it into
+#' a loop or trampoline version with \code{\link{transform}}. Since this function needs to handle
+#' recursive functions, it needs to know the name of its input function, so this must be
+#' provided as a bare symbol.
+#'
+#' @param fun The function to check. Must be provided by its (bare symbol) name.
+#'
+#' @examples
+#' factorial <- function(n)
+#'     if (n <= 1) 1 else n * factorial(n - 1)
+#' factorial_acc <- function(n, acc = 1)
+#'     if (n <= 1) acc else factorial_acc(n - 1, n * acc)
+#'
+#' can_transform(factorial)     # FALSE -- and prints a warning
+#' can_transform(factorial_acc) # TRUE
+#'
+#' @export
+can_transform <- function(fun) {
+    fun <- rlang::enquo(fun)
+    can_transform_(fun)
+}
+
+## Function transformation ###################################################
+
+build_transformed_function <- function(fun_expr, fun_name) {
     fun_expr # FIXME
 }
 
-#' Transform a function and replace its name with the transformed version in the
-#' calling environment.
+#' Transform a function from recursive to looping.
 #'
 #' Since this function needs to handle recursive functions, it needs to know the
 #' name of its input function, so this must be provided as a bare symbol.
 #'
 #' @param fun The function to transform. Must be provided as a bare name.
-#' @param new_name Optional parameter that can be used to save the function under a different name.
 #'
 #' @export
-transform <- function(fun, new_name) {
-    # FIXME: better error handling.
-
-    fun <- rlang::enquo(fun)
-    stopifnot(rlang::is_symbol(fun))
-    new_name <- rlang::quo_name(fun)
-
-    if (!missing(new_name)) {
-        new_name <- rlang::enexpr(new_name)
-        stopifnot(rlang::is_symbol(new_name))
-        new_name <- rlang::as_character(new_name)
+transform <- function(fun) {
+    fun_q <- rlang::enquo(fun)
+    fun <- rlang::eval_tidy(fun)
+    if (!can_transform_(fun_q)) {
+        warning("Could not build a transformed graph.")
+        return(fun)
     }
 
-    fun_expr <- rlang::get_expr(fun)
-    if (can_transform(fun_expr)) {
-        new_fun <- build_transformed_function(fun_expr, new_name)
-        assign(new_name, new_fun, envir = rlang::get_env(fun))
-    }
-
-    invisible(NULL)
+    fun_name <- rlang::quo_name(fun_q)
+    new_fun_body <- build_transformed_function(body(fun), fun_name)
+    rlang::new_function(args = formals(fun),
+                        body = new_fun_body,
+                        env = rlang::get_env(fun_q))
 }

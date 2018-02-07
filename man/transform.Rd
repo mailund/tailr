@@ -2,15 +2,12 @@
 % Please edit documentation in R/loop-transformation.R
 \name{transform}
 \alias{transform}
-\title{Transform a function and replace its name with the transformed version in the
-calling environment.}
+\title{Transform a function from recursive to looping.}
 \usage{
-transform(fun, new_name)
+transform(fun)
 }
 \arguments{
 \item{fun}{The function to transform. Must be provided as a bare name.}
-
-\item{new_name}{Optional parameter that can be used to save the function under a different name.}
 }
 \description{
 Since this function needs to handle recursive functions, it needs to know the
