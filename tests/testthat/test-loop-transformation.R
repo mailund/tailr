@@ -7,24 +7,24 @@ test_that("we can identify functions we can transform", {
         if (n <= 1) acc else factorial_acc(n - 1, n * acc)
 
     expect_warning(
-        expect_false(can_transform(factorial))
+        expect_false(can_loop_transform(factorial))
     )
-    expect_true(can_transform(factorial_acc))
+    expect_true(can_loop_transform(factorial_acc))
 })
 
 test_that("We report errors gracefully", {
     expect_error(
-        can_transform(function(x) x),
+        can_loop_transform(function(x) x),
         "Since we need .*"
     )
     expect_error(
-        can_transform(sum),
+        can_loop_transform(sum),
         "The function provided .*"
     )
 
     g <- function(x) for (e in x) e
     expect_warning(
-        expect_false(tailr::can_transform(g)),
+        expect_false(tailr::can_loop_transform(g)),
         "We can't .*"
     )
 
@@ -32,7 +32,7 @@ test_that("We report errors gracefully", {
             TRUE
         }
     expect_warning(
-        expect_false(tailr::can_transform(g)),
+        expect_false(tailr::can_loop_transform(g)),
         "We can't .*"
     )
 
@@ -40,7 +40,7 @@ test_that("We report errors gracefully", {
             TRUE
         }
     expect_warning(
-        expect_false(tailr::can_transform(g)),
+        expect_false(tailr::can_loop_transform(g)),
         "We can't .*"
     )
 })
@@ -49,7 +49,7 @@ test_that("we can transform a simple function", {
     factorial_acc <- function(n, acc = 1)
         if (n <= 1) acc else factorial_acc(n - 1, n * acc)
 
-    transformed <- transform(factorial_acc)
+    transformed <- loop_transform(factorial_acc)
 
     for (i in 1:10) {
         expect_equal(factorial_acc(i), transformed(i))
@@ -61,7 +61,7 @@ test_that("we cannot transform a non-tail-recursive function", {
         if (n <= 1) acc else n * factorial(n - 1)
 
     expect_warning(
-        expect_equal(factorial, transform(factorial)),
+        expect_equal(factorial, loop_transform(factorial)),
         "Could not build .*"
     )
 })

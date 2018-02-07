@@ -27,7 +27,8 @@ can_call_be_transformed <- function(call_name, call_arguments,
         "if" = {
             can_transform_rec(call_arguments[[1]], fun_name, fun_call_allowed, cc)
             can_transform_rec(call_arguments[[2]], fun_name, TRUE, cc)
-            can_transform_rec(call_arguments[[3]], fun_name, TRUE, cc)
+            if (length(call_arguments) == 3)
+                can_transform_rec(call_arguments[[3]], fun_name, TRUE, cc)
         },
 
         "for" = {
@@ -93,7 +94,7 @@ can_transform_rec <- function(expr, fun_name, fun_call_allowed, cc) {
 #' can_transform_(rlang::quo(factorial_acc)) # TRUE
 #'
 #' @export
-can_transform_ <- function(fun) {
+can_loop_transform_ <- function(fun) {
     fun_name <- rlang::get_expr(fun)
     if (!rlang::is_symbol(fun_name)) {
         error <- simpleError(
@@ -142,15 +143,78 @@ can_transform_ <- function(fun) {
 #' can_transform(factorial_acc) # TRUE
 #'
 #' @export
-can_transform <- function(fun) {
+can_loop_transform <- function(fun) {
     fun <- rlang::enquo(fun)
-    can_transform_(fun)
+    can_loop_transform_(fun)
 }
 
 ## Function transformation ###################################################
 
+#' Make exit points into explicit calls to return.
+#'
+#' This function dispatches on a call object to set the context of recursive
+#' expression modifications.
+#'
+#' @param call_expr The call to modify.
+#' @param in_function_parameter Is the expression part of a parameter to a function call?
+#' @return A modified expression.
+make_returns_explicit_call <- function(call_expr, in_function_parameter) {
+    call_name <- FIXME_rlang_call_name(call_expr)
+    call_args <- FIXME_rlang_call_args(call_expr)
+
+    switch(call_name,
+           # For if-statments we need to treat the condition as in a call
+           # but the two branches will have the same context as the enclosing call.
+           "if" = {
+                call_expr[[2]] <- make_returns_explicit(call_args[[1]], TRUE)
+                call_expr[[3]] <- make_returns_explicit(call_args[[2]], in_function_parameter)
+                if (length(call_args) == 3)
+                    call_expr[[4]] <- make_returns_explicit(call_args[[3]], in_function_parameter)
+           },
+
+           # We don't treat blocks as calls and we only transform the last argument
+           # of the block. Explicit returns are the only way to exit the block in earlier
+           # statements, anyway
+           "{" = {
+               n <- length(call_expr)
+               call_expr[[n]] <- make_returns_explicit(call_expr[[n]], in_function_parameter)
+           },
+
+           # For all other calls we transform the arguments inside a call context.
+           {
+               for (i in seq_along(call_args)) {
+                   call_expr[[i + 1]] <- make_returns_explicit(call_args[[i]], TRUE)
+               }
+               if (!in_function_parameter) # if we weren't parameters, we are a value to be returned
+                   call_expr <- rlang::call2("return", call_expr)
+           }
+           )
+
+    call_expr
+}
+
+#' Make exit points into explicit calls to return.
+#'
+#' @param expr An expression to transform
+#' @param in_function_parameter Is the expression part of a parameter to a function call?
+#' @return A modified expression.
+make_returns_explicit <- function(expr, in_function_parameter) {
+    if (rlang::is_atomic(expr) || rlang::is_pairlist(expr) ||
+        rlang::is_symbol(expr) || rlang::is_primitive(expr)) {
+        if (in_function_parameter) {
+            expr
+        } else {
+            rlang::call2("return", expr)
+        }
+    } else {
+        stopifnot(rlang::is_lang(expr))
+        make_returns_explicit_call(expr, in_function_parameter)
+    }
+}
+
 build_transformed_function <- function(fun_expr, fun_name) {
-    fun_expr # FIXME
+    fun_expr <- make_returns_explicit(fun_expr, FALSE)
+    rlang::call2("while",  TRUE, fun_expr) # FIXME
 }
 
 #' Transform a function from recursive to looping.
@@ -161,10 +225,10 @@ build_transformed_function <- function(fun_expr, fun_name) {
 #' @param fun The function to transform. Must be provided as a bare name.
 #'
 #' @export
-transform <- function(fun) {
+loop_transform <- function(fun) {
     fun_q <- rlang::enquo(fun)
     fun <- rlang::eval_tidy(fun)
-    if (!can_transform_(fun_q)) {
+    if (!can_loop_transform_(fun_q)) {
         warning("Could not build a transformed function")
         return(fun)
     }
