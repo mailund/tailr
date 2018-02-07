@@ -8,7 +8,7 @@
 FIXME_rlang_call_name <- function (call)
 {
     call <- rlang::get_expr(call)
-    if (!rlang::is_call(call)) {
+    if (!rlang::is_lang(call)) {
         abort("`call` must be a call or must wrap a call (e.g. in a quosure)")
     }
     as.character(call[[1]])
