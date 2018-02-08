@@ -1,20 +1,4 @@
 
-# FIXME: replace these with the rlang:: versions once the 1.7 release is out
-# Functions to be replaced later.
-FIXME_rlang_call_name <- function(call) {
-    call <- rlang::get_expr(call)
-    if (!rlang::is_lang(call)) {
-        abort("`call` must be a call or must wrap a call (e.g. in a quosure)")
-    }
-    as.character(call[[1]])
-}
-FIXME_rlang_call_args <- function(call) {
-    call <- rlang::get_expr(call)
-    args <- as.list(call[-1])
-    rlang::set_names((args), rlang::names2(args))
-}
-# FIXME: end rlang
-
 ## Test for possibility of transformation #########################################
 
 # I need to import these for CHECK to work, so I might as well do it here...
@@ -80,8 +64,8 @@ can_transform_rec <- function(expr, fun_name, fun_call_allowed, cc) {
         return(TRUE)
     } else {
         stopifnot(rlang::is_lang(expr))
-        call_name <- FIXME_rlang_call_name(expr)
-        call_arguments <- FIXME_rlang_call_args(expr)
+        call_name <- rlang::call_name(expr)
+        call_arguments <- rlang::call_args(expr)
         can_call_be_transformed(call_name, call_arguments, fun_name, fun_call_allowed, cc)
     }
 }
@@ -173,8 +157,8 @@ can_loop_transform <- function(fun) {
 #' @param in_function_parameter Is the expression part of a parameter to a function call?
 #' @return A modified expression.
 make_returns_explicit_call <- function(call_expr, in_function_parameter) {
-    call_name <- FIXME_rlang_call_name(call_expr)
-    call_args <- FIXME_rlang_call_args(call_expr)
+    call_name <- rlang::call_name(call_expr)
+    call_args <- rlang::call_args(call_expr)
 
     switch(call_name,
            # For if-statments we need to treat the condition as in a call
@@ -197,7 +181,7 @@ make_returns_explicit_call <- function(call_expr, in_function_parameter) {
            # For all other calls we transform the arguments inside a call context.
            {
                for (i in seq_along(call_args)) {
-                   call_expr[[i + 1]] <- make_returns_explicit(call_args[[i]], TRUE)
+                   # call_expr[[i + 1]] <- make_returns_explicit(call_args[[i]], TRUE)
                }
                if (!in_function_parameter) # if we weren't parameters, we are a value to be returned
                    call_expr <- rlang::call2("return", call_expr)
@@ -273,16 +257,16 @@ transform_recursive_calls <- function(expr, fun_name, fun) {
 
     } else {
         stopifnot(rlang::is_lang(expr))
-        call_name <- FIXME_rlang_call_name(expr)
+        call_name <- rlang::call_name(expr)
         if (call_name == "return") {
             if (rlang::is_lang(expr[[2]])) {
-                call_name <- FIXME_rlang_call_name(expr[[2]])
+                call_name <- rlang::call_name(expr[[2]])
                 if (call_name == fun_name) {
                     return(translate_recursive_call_into_next(expr[[2]], fun))
                 }
             }
         }
-        expr_args <- FIXME_rlang_call_args(expr)
+        expr_args <- rlang::call_args(expr)
         for (i in seq_along(expr_args)) {
             expr[[i + 1]] <- transform_recursive_calls(expr_args[[i]], fun_name, fun)
         }
@@ -301,11 +285,11 @@ simplify_nested_blocks <- function(expr) {
 
     } else {
         stopifnot(rlang::is_lang(expr))
-        call_name <- FIXME_rlang_call_name(expr)
+        call_name <- rlang::call_name(expr)
         if (call_name == "{" && length(expr) == 2) {
             simplify_nested_blocks(expr[[2]])
         } else {
-            args <- FIXME_rlang_call_args(expr)
+            args <- rlang::call_args(expr)
             for (i in seq_along(args)) {
                 expr[[i + 1]] <- simplify_nested_blocks(args[[i]])
             }
