@@ -74,6 +74,8 @@ test_that("we simplify code-blocks", {
             factorial_acc_2(n - 1, n * acc)
         }
 
+    can_loop_transform(factorial_acc_1)
+
     transformed_1 <- loop_transform(factorial_acc_1)
     transformed_2 <- loop_transform(factorial_acc_2)
 

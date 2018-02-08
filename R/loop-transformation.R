@@ -87,26 +87,7 @@ can_transform_rec <- function(expr, fun_name, fun_call_allowed, cc) {
 }
 
 
-#' Tests if a function, provided by its name, can be transformed.
-#'
-#' This function analyses a recursive function to check if we can transform it into
-#' a loop or trampoline version with \code{\link{loop_transform}}. This version expects the
-#' function to be provided as a quosure, but see also \code{\link{can_loop_transform}}.
-#'
-#' Since this function needs to handle recursive functions, it needs to know the name of
-#' its input function, so this must be provided as a bare symbol.
-#'
-#' @param fun The function to check. Must be provided by its (bare symbol) name.
-#'
-#' @examples
-#' factorial <- function(n)
-#'     if (n <= 1) 1 else n * factorial(n - 1)
-#' factorial_acc <- function(n, acc = 1)
-#'     if (n <= 1) acc else factorial_acc(n - 1, n * acc)
-#'
-#' can_loop_transform_(rlang::quo(factorial))     # FALSE -- and prints a warning
-#' can_loop_transform_(rlang::quo(factorial_acc)) # TRUE
-#'
+#' @describeIn can_loop_transform This version expects \code{fun} to be quosure.
 #' @export
 can_loop_transform_ <- function(fun) {
     fun_name <- rlang::get_expr(fun)
@@ -134,7 +115,10 @@ can_loop_transform_ <- function(fun) {
         stop(error)
     }
 
-    callCC(function(cc) can_transform_rec(body(fun), fun_name, TRUE, cc))
+    ## FIXME: don't transform twice; we do this now both here and in the
+    ## loop transformation
+    fun_body <- user_transform(body(fun), rlang::get_env(fun))
+    callCC(function(cc) can_transform_rec(fun_body, fun_name, TRUE, cc))
 }
 
 
@@ -156,6 +140,10 @@ can_loop_transform_ <- function(fun) {
 #' can_loop_transform(factorial)     # FALSE -- and prints a warning
 #' can_loop_transform(factorial_acc) # TRUE
 #'
+#' can_loop_transform_(rlang::quo(factorial))     # FALSE -- and prints a warning
+#' can_loop_transform_(rlang::quo(factorial_acc)) # TRUE
+#'
+#' @describeIn can_loop_transform This version quotes \code{fun} itself.
 #' @export
 can_loop_transform <- function(fun) {
     fun <- rlang::enquo(fun)
@@ -355,6 +343,7 @@ loop_transform <- function(fun) {
     }
 
     fun_name <- rlang::quo_name(fun_q)
+    user_transformed_body <- user_transform(body(fun), rlang::get_env(fun_q))
     new_fun_body <- build_transformed_function(body(fun), fun_name, fun)
     rlang::new_function(
         args = formals(fun),
