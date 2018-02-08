@@ -10,7 +10,8 @@ Language: en-GB
 LazyData: true
 ByteCompile: true
 Depends: 
-    R (>= 3.1),
+    R (>= 3.1)
+Imports:
     rlang,
     glue
 Suggests: 

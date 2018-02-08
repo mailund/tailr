@@ -14,9 +14,6 @@
 #' @param cc Current continuation to abort if a transformation is not possible
 #'
 #' @return TRUE, if the expression can be transformed. Invokes \code{cc} otherwise.
-#'
-#' @import glue
-#' @import rlang
 can_call_be_transformed <- function(call_name, call_arguments,
                                     fun_name, fun_call_allowed, cc) {
     switch(call_name,
