@@ -48,7 +48,15 @@ test_that("We report errors gracefully", {
 test_that("we can transform a simple function", {
     factorial_acc <- function(n, acc = 1)
         if (n <= 1) acc else factorial_acc(n - 1, n * acc)
+    transformed <- loop_transform(factorial_acc)
 
+    for (i in 1:10) {
+        expect_equal(factorial_acc(i), transformed(i))
+    }
+
+    # also when the return value is in a call...
+    factorial_acc <- function(n, acc = 1)
+        if (n <= 1) identity(acc) else factorial_acc(n - 1, n * acc)
     transformed <- loop_transform(factorial_acc)
 
     for (i in 1:10) {
