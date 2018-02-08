@@ -56,6 +56,22 @@ test_that("we can transform a simple function", {
     }
 })
 
+test_that("we simplify code-blocks", {
+    factorial_acc_1 <- function(n, acc = 1)
+        if (n <= 1) acc else factorial_acc_1(n - 1, n * acc)
+    factorial_acc_2 <- function(n, acc = 1)
+        if (n <= 1) {
+            acc
+        } else {
+            factorial_acc_2(n - 1, n * acc)
+        }
+
+    transformed_1 <- loop_transform(factorial_acc_1)
+    transformed_2 <- loop_transform(factorial_acc_2)
+
+    expect_equal(body(transformed_1), body(transformed_2))
+})
+
 test_that("we cannot transform a non-tail-recursive function", {
     factorial <- function(n, acc = 1)
         if (n <= 1) acc else n * factorial(n - 1)

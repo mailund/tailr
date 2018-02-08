@@ -32,8 +32,8 @@ can_call_be_transformed <- function(call_name, call_arguments,
             can_transform_rec(call_arguments[[1]], fun_name, fun_call_allowed, cc)
             can_transform_rec(call_arguments[[2]], fun_name, TRUE, cc)
             if (length(call_arguments) == 3) {
-                  can_transform_rec(call_arguments[[3]], fun_name, TRUE, cc)
-              }
+                can_transform_rec(call_arguments[[3]], fun_name, TRUE, cc)
+            }
         },
 
         # Loops
@@ -186,8 +186,8 @@ make_returns_explicit_call <- function(call_expr, in_function_parameter) {
             call_expr[[2]] <- make_returns_explicit(call_args[[1]], TRUE)
             call_expr[[3]] <- make_returns_explicit(call_args[[2]], in_function_parameter)
             if (length(call_args) == 3) {
-                  call_expr[[4]] <- make_returns_explicit(call_args[[3]], in_function_parameter)
-              }
+                call_expr[[4]] <- make_returns_explicit(call_args[[3]], in_function_parameter)
+            }
         },
 
         # We don't treat blocks as calls and we only transform the last argument
@@ -204,8 +204,8 @@ make_returns_explicit_call <- function(call_expr, in_function_parameter) {
                 # call_expr[[i + 1]] <- make_returns_explicit(call_args[[i]], TRUE)
             }
             if (!in_function_parameter) { # if we weren't parameters, we are a value to be returned
-                  call_expr <- rlang::call2("return", call_expr)
-              }
+                call_expr <- rlang::call2("return", call_expr)
+            }
         }
     )
 
