@@ -11,7 +11,7 @@ can_loop_transform_(fun)
 }
 \description{
 This function analyses a recursive function to check if we can transform it into
-a loop or trampoline version with \code{\link{transform}}. This version expects the
+a loop or trampoline version with \code{\link{loop_transform}}. This version expects the
 function to be provided as a quosure, but see also \code{\link{can_loop_transform}}.
 }
 \details{
