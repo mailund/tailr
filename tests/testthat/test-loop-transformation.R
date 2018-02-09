@@ -55,6 +55,12 @@ test_that("we can transform a simple function", {
     }
 
     # also when the return value is in a call...
+    f <- function(x) identity(x)
+    transformed <- loop_transform(f)
+    for (i in 1:10) {
+        expect_equal(f(i), i)
+    }
+
     factorial_acc <- function(n, acc = 1)
         if (n <= 1) identity(acc) else factorial_acc(n - 1, n * acc)
     transformed <- loop_transform(factorial_acc)

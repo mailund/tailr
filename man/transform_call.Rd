@@ -43,7 +43,7 @@ class(my_if_else)
 
 transform_call.my_if_else <- function(fun, expr) {
     test <- expr[[2]]; if_true <- expr[[3]]; if_false <- expr[[4]]
-    rlang::expr(if(rlang::UQ(test)) rlang::UQ(if_true) else rlang::UQ(if_false))
+    rlang::expr(if (rlang::UQ(test)) rlang::UQ(if_true) else rlang::UQ(if_false))
 }
 transform_call(my_if_else, quote(my_if_else(x == y, x, f(y, y))))
 

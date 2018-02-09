@@ -186,7 +186,7 @@ make_returns_explicit_call <- function(call_expr, in_function_parameter) {
         # For all other calls we transform the arguments inside a call context.
         {
             for (i in seq_along(call_args)) {
-                # call_expr[[i + 1]] <- make_returns_explicit(call_args[[i]], TRUE)
+                call_expr[[i + 1]] <- make_returns_explicit(call_args[[i]], TRUE)
             }
             if (!in_function_parameter) { # if we weren't parameters, we are a value to be returned
                 call_expr <- rlang::call2("return", call_expr)
