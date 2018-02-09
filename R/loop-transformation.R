@@ -116,6 +116,11 @@ check_function_argument <- function(fun) {
 
 #' @describeIn can_loop_transform This version expects \code{fun_body} to be qboth tested
 #'                                and user-transformed.
+#'
+#' @param fun_name Name of the recursive function.
+#' @param fun_body The user-transformed function body.
+#' @param env      Environment used to look up variables used in \code{fun_body}.
+#'
 #' @export
 can_loop_transform_body <- function(fun_name, fun_body, env) {
     fun_body <- user_transform(fun_body, env)

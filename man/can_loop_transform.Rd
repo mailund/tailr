@@ -13,6 +13,12 @@ can_loop_transform_(fun)
 can_loop_transform(fun)
 }
 \arguments{
+\item{fun_name}{Name of the recursive function.}
+
+\item{fun_body}{The user-transformed function body.}
+
+\item{env}{Environment used to look up variables used in \code{fun_body}.}
+
 \item{fun}{The function to check. Must be provided by its (bare symbol) name.}
 }
 \description{
