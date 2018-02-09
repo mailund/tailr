@@ -24,6 +24,23 @@ can_call_be_transformed <- function(call_name, call_arguments,
             }
         },
 
+        # Eval is really just evaluation of an expression in the calling scope,
+        # so we shouldn't consider those function calls either... I'm not sure how to
+        # handle them when it comes to what they return, though, since it depends
+        # on the expression they will evaluate
+        "eval" = {
+            warning("We can't yet handle eval expressions.")
+            cc(FALSE)
+        },
+
+        # With expressions are a bit like eval, I guess... don't consider them
+        # function calls.
+        "with" = {
+            for (arg in call_arguments) {
+                can_transform_rec(arg, fun_name, fun_call_allowed, cc)
+            }
+        },
+
         # Selection
         "if" = {
             can_transform_rec(call_arguments[[1]], fun_name, fun_call_allowed, cc)
@@ -199,6 +216,18 @@ make_returns_explicit_call <- function(call_expr, in_function_parameter) {
         "{" = {
             n <- length(call_expr)
             call_expr[[n]] <- make_returns_explicit(call_expr[[n]], in_function_parameter)
+        },
+
+        # Not sure how to handle eval, exactly...
+        # The problem here is that I need to return the expression if it is not a recursive call
+        # but not if it is...
+        "eval" = {
+            stop("FIXME")
+        },
+
+        # With should just be left alone and we can deal with the expression it evaluates
+        "with" = {
+            call_expr[[3]] <- make_returns_explicit(call_expr[[3]], in_function_parameter)
         },
 
         # For all other calls we transform the arguments inside a call context.
