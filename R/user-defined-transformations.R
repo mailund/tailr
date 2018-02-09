@@ -52,19 +52,6 @@ transform_call.default <- function(fun, expr) {
 #' @param env  The environment where functions can be found.
 #'
 #' @return Rewritten expression
-#'
-#' @examples
-#' my_if_else <- function(test, if_true, if_false) {
-#'     if (test) if_true else if_false
-#' }
-#' class(my_if_else) <- c("my_if_else", class(my_if_else))
-#' transform_call.my_if_else <- function(fun, expr) {
-#'     test <- expr[[2]]; if_true <- expr[[3]]; if_false <- expr[[4]]
-#'     rlang::expr(if (rlang::UQ(test)) rlang::UQ(if_true) else rlang::UQ(if_false))
-#' }
-#'
-#' f <- function(x, y) my_if_else(x == y, x, f(y, y))
-#' user_transform_rec(body(f))
 user_transform_rec <- function(expr, env = rlang::caller_env()) {
     if (rlang::is_atomic(expr) || rlang::is_pairlist(expr) ||
         rlang::is_symbol(expr) || rlang::is_primitive(expr)) {

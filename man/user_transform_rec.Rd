@@ -19,16 +19,3 @@ The difference between this function and \code{\link{user_transform}} is that th
 function does not perform type checks before calling recursively while \code{\link{user_transform}}
 does.
 }
-\examples{
-my_if_else <- function(test, if_true, if_false) {
-    if (test) if_true else if_false
-}
-class(my_if_else) <- c("my_if_else", class(my_if_else))
-transform_call.my_if_else <- function(fun, expr) {
-    test <- expr[[2]]; if_true <- expr[[3]]; if_false <- expr[[4]]
-    rlang::expr(if (rlang::UQ(test)) rlang::UQ(if_true) else rlang::UQ(if_false))
-}
-
-f <- function(x, y) my_if_else(x == y, x, f(y, y))
-user_transform_rec(body(f))
-}
