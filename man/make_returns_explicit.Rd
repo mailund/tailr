@@ -4,12 +4,14 @@
 \alias{make_returns_explicit}
 \title{Make exit points into explicit calls to return.}
 \usage{
-make_returns_explicit(expr, in_function_parameter)
+make_returns_explicit(expr, in_function_parameter, info)
 }
 \arguments{
 \item{expr}{An expression to transform}
 
 \item{in_function_parameter}{Is the expression part of a parameter to a function call?}
+
+\item{info}{Information passed along the transformations.}
 }
 \value{
 A modified expression.

@@ -4,14 +4,12 @@
 \alias{build_transformed_function}
 \title{Construct the expression for a transformed function body.}
 \usage{
-build_transformed_function(fun_expr, fun_name, fun)
+build_transformed_function(fun_expr, info)
 }
 \arguments{
 \item{fun_expr}{The original function body.}
 
-\item{fun_name}{The name of the recursive function.}
-
-\item{fun}{The actual function definition.}
+\item{info}{Information passed along the transformations.}
 }
 \value{
 The body of the transformed function.

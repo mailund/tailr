@@ -100,16 +100,17 @@ test_that("we cannot transform a non-tail-recursive function", {
 
 test_that("we can handle `with` expressions", {
     f <- function(x) {
-        if (x < 0) x
-        else with(list(y = -1), f(x + y))
+        if (x < 0) {
+              x
+          } else {
+              with(list(y = -1), f(x + y))
+          }
     }
 
     expect_true(can_loop_transform(f))
     transformed_f <- loop_transform(f)
 
-    skip("this doesn't work because we cannot use `next` inside `with`.")
     for (x in 1:5) {
         expect_equal(f(x), transformed_f(x))
     }
-
 })

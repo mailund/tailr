@@ -187,6 +187,24 @@ can_loop_transform <- function(fun) {
 
 ## Function transformation ###################################################
 
+#' Translate a return(<recursive-function-call>) expressions into
+#' a block that assigns the parameters to local variables and call `continue`.
+#'
+#' @param recursive_call The call object where we get the parameters
+#' @param info           Information passed along to the transformations.
+#' @return The rewritten expression
+translate_recursive_call <- function(recursive_call, info) {
+    expanded_call <- match.call(definition = info$fun, call = recursive_call)
+    arguments <- as.list(expanded_call)[-1]
+    assignments <- rlang::expr(rlang::env_bind(.tailr_env, !!! arguments))
+    as.call(c(
+        rlang::sym("{"),
+        assignments,
+        rlang::expr(rlang::return_to(.tailr_frame))
+    ))
+}
+
+
 #' Make exit points into explicit calls to return.
 #'
 #' This function dispatches on a call object to set the context of recursive
@@ -194,8 +212,9 @@ can_loop_transform <- function(fun) {
 #'
 #' @param call_expr The call to modify.
 #' @param in_function_parameter Is the expression part of a parameter to a function call?
+#' @param info  Information passed along with transformations.
 #' @return A modified expression.
-make_returns_explicit_call <- function(call_expr, in_function_parameter) {
+make_returns_explicit_call <- function(call_expr, in_function_parameter, info) {
     call_name <- rlang::call_name(call_expr)
     call_args <- rlang::call_args(call_expr)
 
@@ -203,10 +222,10 @@ make_returns_explicit_call <- function(call_expr, in_function_parameter) {
         # For if-statments we need to treat the condition as in a call
         # but the two branches will have the same context as the enclosing call.
         "if" = {
-            call_expr[[2]] <- make_returns_explicit(call_args[[1]], TRUE)
-            call_expr[[3]] <- make_returns_explicit(call_args[[2]], in_function_parameter)
+            call_expr[[2]] <- make_returns_explicit(call_args[[1]], TRUE, info)
+            call_expr[[3]] <- make_returns_explicit(call_args[[2]], in_function_parameter, info)
             if (length(call_args) == 3) {
-                call_expr[[4]] <- make_returns_explicit(call_args[[3]], in_function_parameter)
+                call_expr[[4]] <- make_returns_explicit(call_args[[3]], in_function_parameter, info)
             }
         },
 
@@ -215,7 +234,7 @@ make_returns_explicit_call <- function(call_expr, in_function_parameter) {
         # statements, anyway
         "{" = {
             n <- length(call_expr)
-            call_expr[[n]] <- make_returns_explicit(call_expr[[n]], in_function_parameter)
+            call_expr[[n]] <- make_returns_explicit(call_expr[[n]], in_function_parameter, info)
         },
 
         # Not sure how to handle eval, exactly...
@@ -227,16 +246,20 @@ make_returns_explicit_call <- function(call_expr, in_function_parameter) {
 
         # With should just be left alone and we can deal with the expression it evaluates
         "with" = {
-            call_expr[[3]] <- make_returns_explicit(call_expr[[3]], in_function_parameter)
+            call_expr[[3]] <- make_returns_explicit(call_expr[[3]], in_function_parameter, info)
         },
 
         # For all other calls we transform the arguments inside a call context.
         {
-            for (i in seq_along(call_args)) {
-                call_expr[[i + 1]] <- make_returns_explicit(call_args[[i]], TRUE)
-            }
-            if (!in_function_parameter) { # if we weren't parameters, we are a value to be returned
-                call_expr <- rlang::call2("return", call_expr)
+            if (rlang::call_name(call_expr) == info$fun_name) {
+                call_expr <- translate_recursive_call(call_expr, info)
+            } else {
+                for (i in seq_along(call_args)) {
+                    call_expr[[i + 1]] <- make_returns_explicit(call_args[[i]], TRUE, info)
+                }
+                if (!in_function_parameter) { # if we weren't parameters, we are a value to be returned
+                    call_expr <- rlang::expr(rlang::return_from(.tailr_frame, !! call_expr))
+                }
             }
         }
     )
@@ -248,85 +271,19 @@ make_returns_explicit_call <- function(call_expr, in_function_parameter) {
 #'
 #' @param expr An expression to transform
 #' @param in_function_parameter Is the expression part of a parameter to a function call?
+#' @param info Information passed along the transformations.
 #' @return A modified expression.
-make_returns_explicit <- function(expr, in_function_parameter) {
+make_returns_explicit <- function(expr, in_function_parameter, info) {
     if (rlang::is_atomic(expr) || rlang::is_pairlist(expr) ||
         rlang::is_symbol(expr) || rlang::is_primitive(expr)) {
         if (in_function_parameter) {
             expr
         } else {
-            rlang::call2("return", expr)
+            rlang::expr(rlang::return_from(.tailr_frame, !! expr))
         }
     } else {
         stopifnot(rlang::is_lang(expr))
-        make_returns_explicit_call(expr, in_function_parameter)
-    }
-}
-
-#' Translate a return(<recursive-function-call>) expressions into
-#' a block that assigns the parameters to local variables and call `continue`.
-#'
-#' @param recursive_call The call object where we get the parameters
-#' @param fun The actual function -- we use this for the call to `match.call`.
-#' @return The rewritten expression
-translate_recursive_call_into_next <- function(recursive_call, fun) {
-    expanded_call <- match.call(definition = fun, call = recursive_call)
-    assignments <- as.list(expanded_call)[-1]
-    variables <- names(assignments)
-
-    # We cannot do a simple loop and assign expressions to the local variables.
-    # If we did, the order of assignments might matter. We need a parallel
-    # assignment.
-    new_vars <- vector("character", length = length(assignments))
-    new_assignments <- vector("list", length = length(assignments))
-    for (i in seq_along(assignments)) {
-        new_vars[[i]] <- paste0("..", variables[[i]])
-        new_assignments[[i]] <-
-            call(
-                "<-",
-                rlang::sym(new_vars[[i]]),
-                assignments[[i]]
-            )
-    }
-    for (i in seq_along(assignments)) {
-        assignments[[i]] <-
-            call(
-                "<-",
-                rlang::sym(variables[[i]]),
-                rlang::sym(new_vars[[i]])
-            )
-    }
-
-    as.call(c(rlang::sym("{"), new_assignments, assignments, `next`))
-}
-
-#' Translate all return(<recursive-function-call>) expressions into
-#' a block that assigns the parameters to local variables.
-#'
-#' @param expr The expression to rewrite
-#' @param fun_name The name of the recursive function we are rewriting
-#' @param fun The actual function -- we use this for the call to `match.call`.
-#' @return The rewritten expression
-transform_recursive_calls <- function(expr, fun_name, fun) {
-    if (rlang::is_atomic(expr) || rlang::is_pairlist(expr) ||
-        rlang::is_symbol(expr) || rlang::is_primitive(expr)) {
-        expr
-    } else {
-        stopifnot(rlang::is_lang(expr))
-        call_name <- rlang::call_name(expr)
-        if (call_name == "return") {
-            if (rlang::is_lang(expr[[2]])) {
-                call_name <- rlang::call_name(expr[[2]])
-                if (call_name == fun_name) {
-                    return(translate_recursive_call_into_next(expr[[2]], fun))
-                }
-            }
-        }
-        expr_args <- rlang::call_args(expr)
-        for (i in seq_along(expr_args)) {
-            expr[[i + 1]] <- transform_recursive_calls(expr_args[[i]], fun_name, fun)
-        }
-        expr
+        make_returns_explicit_call(expr, in_function_parameter, info)
     }
 }
 
@@ -362,15 +319,18 @@ simplify_nested_blocks <- function(expr) {
 #' the body of a recursive function into a looping function.
 #'
 #' @param fun_expr The original function body.
-#' @param fun_name The name of the recursive function.
-#' @param fun The actual function definition.
-#'
+#' @param info Information passed along the transformations.
 #' @return The body of the transformed function.
-build_transformed_function <- function(fun_expr, fun_name, fun) {
-    fun_expr <- make_returns_explicit(fun_expr, FALSE)
-    fun_expr <- transform_recursive_calls(fun_expr, fun_name, fun)
+build_transformed_function <- function(fun_expr, info) {
+    fun_expr <- make_returns_explicit(fun_expr, FALSE, info)
     fun_expr <- simplify_nested_blocks(fun_expr)
-    rlang::call2("repeat", fun_expr)
+    rlang::expr({
+        .tailr_env <- rlang::get_env()
+        .tailr_frame <- rlang::current_frame()
+        repeat {
+            !! fun_expr
+        }
+    })
 }
 
 #' Transform a function from recursive to looping.
@@ -394,8 +354,9 @@ loop_transform <- function(fun) {
         warning("Could not build a transformed function")
         return(fun)
     }
+    info <- list(fun = fun, fun_name = fun_name)
 
-    new_fun_body <- build_transformed_function(fun_body, fun_name, fun)
+    new_fun_body <- build_transformed_function(fun_body, info)
     rlang::new_function(
         args = formals(fun),
         body = new_fun_body,

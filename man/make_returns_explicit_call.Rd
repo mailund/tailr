@@ -4,12 +4,14 @@
 \alias{make_returns_explicit_call}
 \title{Make exit points into explicit calls to return.}
 \usage{
-make_returns_explicit_call(call_expr, in_function_parameter)
+make_returns_explicit_call(call_expr, in_function_parameter, info)
 }
 \arguments{
 \item{call_expr}{The call to modify.}
 
 \item{in_function_parameter}{Is the expression part of a parameter to a function call?}
+
+\item{info}{Information passed along with transformations.}
 }
 \value{
 A modified expression.
