@@ -87,9 +87,7 @@ can_transform_rec <- function(expr, fun_name, fun_call_allowed, cc) {
 }
 
 
-#' @describeIn can_loop_transform This version expects \code{fun} to be quosure.
-#' @export
-can_loop_transform_ <- function(fun) {
+check_function_argument <- function(fun) {
     fun_name <- rlang::get_expr(fun)
     if (!rlang::is_symbol(fun_name)) {
         error <- simpleError(
@@ -114,11 +112,26 @@ can_loop_transform_ <- function(fun) {
         )
         stop(error)
     }
+}
 
-    ## FIXME: don't transform twice; we do this now both here and in the
-    ## loop transformation
-    fun_body <- user_transform(body(fun), rlang::get_env(fun))
+#' @describeIn can_loop_transform This version expects \code{fun_body} to be qboth tested
+#'                                and user-transformed.
+#' @export
+can_loop_transform_body <- function(fun_name, fun_body, env) {
+    fun_body <- user_transform(fun_body, env)
     callCC(function(cc) can_transform_rec(fun_body, fun_name, TRUE, cc))
+}
+
+#' @describeIn can_loop_transform This version expects \code{fun} to be quosure.
+#' @export
+can_loop_transform_ <- function(fun) {
+    check_function_argument(fun)
+
+    fun_name <- rlang::get_expr(fun)
+    fun_env <- rlang::get_env(fun)
+    fun_body <- user_transform(body(rlang::eval_tidy(fun)), fun_env)
+
+    can_loop_transform_body(fun_name, fun_body, fun_env)
 }
 
 
@@ -336,15 +349,19 @@ build_transformed_function <- function(fun_expr, fun_name, fun) {
 #' @export
 loop_transform <- function(fun) {
     fun_q <- rlang::enquo(fun)
+    check_function_argument(fun_q)
+
     fun <- rlang::eval_tidy(fun)
-    if (!can_loop_transform_(fun_q)) {
+    fun_name <- rlang::get_expr(fun_q)
+    fun_env <- rlang::get_env(fun_q)
+    fun_body <- user_transform(body(fun), fun_env)
+
+    if (!can_loop_transform_body(fun_name, fun_body, fun_env)) {
         warning("Could not build a transformed function")
         return(fun)
     }
 
-    fun_name <- rlang::quo_name(fun_q)
-    user_transformed_body <- user_transform(body(fun), rlang::get_env(fun_q))
-    new_fun_body <- build_transformed_function(body(fun), fun_name, fun)
+    new_fun_body <- build_transformed_function(fun_body, fun_name, fun)
     rlang::new_function(
         args = formals(fun),
         body = new_fun_body,
