@@ -80,4 +80,5 @@ n <- 100
 microbenchmark::microbenchmark(factorial(n), loop_factorial(n), tr_loop_factorial(n))
 ```
 
-There is some overhead in the translated version. I believe this is the parallel assignments that replace the recursive call, see Issue #7.
+There is **massive** overhead in the translated version. I believe this is the parallel assignments that replace the recursive call, see Issue #7. Simpler translations were faster. I'm working on improving this!
+

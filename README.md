@@ -6,7 +6,7 @@
 [![Project Status: Active – The project has reached a stable, usable
 state and is being actively
 developed.](http://www.repostatus.org/badges/latest/active.svg)](http://www.repostatus.org/#active)
-[![Last-changedate](https://img.shields.io/badge/last%20change-2018--02--07-orange.svg)](/commits/master)
+[![Last-changedate](https://img.shields.io/badge/last%20change-2018--02--10-orange.svg)](/commits/master)
 [![lifecycle](http://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://www.tidyverse.org/lifecycle/#experimental)
 [![Licence](https://img.shields.io/badge/licence-GPL--3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0.en.html)
 
@@ -57,12 +57,18 @@ We can then, automatically, translate that into a looping version:
 tr_loop_factorial <- tailr::loop_transform(factorial)
 tr_loop_factorial
 #> function (n, acc = 1) 
-#> repeat if (n <= 1) return(acc) else {
-#>     ..n <- n - 1
-#>     ..acc <- acc * n
-#>     n <- ..n
-#>     acc <- ..acc
-#>     .Primitive("next")
+#> {
+#>     .tailr_env <- rlang::get_env()
+#>     .tailr_frame <- rlang::current_frame()
+#>     repeat {
+#>         if (n <= 1) 
+#>             rlang::return_from(.tailr_frame, acc)
+#>         else {
+#>             rlang::env_bind(.tailr_env, n = n - 1, acc = acc * 
+#>                 n)
+#>             rlang::return_to(.tailr_frame)
+#>         }
+#>     }
 #> }
 ```
 
@@ -83,15 +89,16 @@ loop_factorial <- function(n) {
 n <- 100
 microbenchmark::microbenchmark(factorial(n), loop_factorial(n), tr_loop_factorial(n))
 #> Unit: microseconds
-#>                  expr    min      lq     mean  median      uq      max
-#>          factorial(n) 53.177 54.8510 76.17915 56.8880 64.7175 1616.485
-#>     loop_factorial(n)  4.878  4.9425 33.33417  5.1370  5.2465 2820.040
-#>  tr_loop_factorial(n)  8.963  9.3505 33.13009 10.2955 14.3730 2163.053
-#>  neval
-#>    100
-#>    100
-#>    100
+#>                  expr        min         lq        mean      median
+#>          factorial(n)     53.166     55.697     87.8910     70.4805
+#>     loop_factorial(n)      4.935      5.273     26.5116      6.0450
+#>  tr_loop_factorial(n) 123102.498 127133.018 137981.7610 131420.2170
+#>           uq        max neval
+#>      82.2595   1702.904   100
+#>       6.5275   2040.272   100
+#>  137787.8420 268219.932   100
 ```
 
-There is some overhead in the translated version. I believe this is the
-parallel assignments that replace the recursive call, see Issue \#7.
+There is **massive** overhead in the translated version. I believe this
+is the parallel assignments that replace the recursive call, see Issue
+\#7. Simpler translations were faster. I’m working on improving this\!
