@@ -61,6 +61,8 @@ We can then, automatically, translate that into a looping version:
 ```{r}
 tr_loop_factorial <- tailr::loop_transform(factorial)
 tr_loop_factorial
+
+tr_loop_factorial(100)
 ```
 
 We can then compare the running time with the recursive function and a version that is written using a loop:
