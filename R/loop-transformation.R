@@ -1,4 +1,10 @@
 
+# This is a dummy. It is only here to prevent notes from package checks where
+# we would otherwise get a complaint that `escape` is not defined. Everywhere
+# when we actually call a `escape` function, it is a continuation from calls to
+# `callCC`.
+escape <- function(x) x
+
 ## Test for possibility of transformation #########################################
 
 # I need to import the Depends packagefor CHECK to work, so I might as well do it here...
@@ -333,7 +339,7 @@ translate_recursive_call <- function(recursive_call, info) {
     tmp_assignments <- vector("list", length = length(arguments))
     for (i in seq_along(arguments)) {
         tmp_var <- parse(text = paste(".tailr_", vars[i], sep = ""))[[1]]
-        tmp_assignments[[i]] <- rlang::expr(!! tmp_var <<- !! arguments[[i]])
+        tmp_assignments[[i]] <- rlang::expr(rlang::UQ(tmp_var) <<- rlang::UQ(arguments[[i]]))
     }
     as.call(c(
         rlang::sym("{"),
@@ -403,7 +409,7 @@ returns_to_escapes_call <- function(call_expr, info) {
     switch(call_name,
         # Handle returns
         "return" = {
-            call_expr <- rlang::expr(escape(!! call_expr[[2]]))
+            call_expr <- rlang::expr(escape(rlang::UQ(call_expr[[2]])))
         },
 
         # For all other calls we just recurse
@@ -472,8 +478,8 @@ build_transformed_function <- function(fun_expr, info) {
     for (i in seq_along(vars)) {
         local_var <- as.symbol(vars[[i]])
         tmp_var <- parse(text = paste(".tailr_", vars[[i]], sep = ""))[[1]]
-        tmp_assignments[[i]] <- rlang::expr(!! tmp_var <- !! local_var)
-        locals_assignments[[i]] <- rlang::expr(!! local_var <- !! tmp_var)
+        tmp_assignments[[i]] <- rlang::expr(rlang::UQ(tmp_var) <- rlang::UQ(local_var))
+        locals_assignments[[i]] <- rlang::expr(rlang::UQ(local_var) <- rlang::UQ(tmp_var))
     }
 
     # this would be a nice pipeline, but it is a bit much to require
