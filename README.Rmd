@@ -25,15 +25,17 @@ knitr::opts_chunk$set(
 [![Coverage status](http://coveralls.io/repos/github/mailund/tailr/badge.svg?branch=master)](https://coveralls.io/github/mailund/tailr?branch=master)
 
 [![minimal R version](https://img.shields.io/badge/R%3E%3D-3.1-blue.svg)](https://cran.r-project.org/)
-[![packageversion](https://img.shields.io/badge/Package%20version-0.0.0.9000-orange.svg?style=flat-square)](commits/master)
+[![packageversion](https://img.shields.io/badge/Package%20version-0.0.0.9003-orange.svg?style=flat-square)](commits/master)
 <!--[![CRAN_Status_Badge](http://www.r-pkg.org/badges/version/tailr)](https://cran.r-project.org/package=tailr)
 -->
  
 ---
  
+Recursive functions are the natural way to express iterations in a functional programming langauge, but in R, they can be significantly slower than loop-versions and for moderately long sequences or moderately deep trees, recursive functions will reach a limit imposted on them by the stack limit.
 
+There are known solutions to these problems, as long as functions are written to be tail-recursive, meaning that the return value of a function is either a base value or another recursive call, but where we do not call recursively to then do something with the result.
 
-The goal of tailr is to automatically transform tail-recursive functions into loops or trampolines.
+The goal of `tailr` is to automatically transform tail-recursive functions into loops or trampolines.
 
 ## Installation
 
@@ -59,10 +61,10 @@ factorial <- function(n, acc = 1) {
 We can then, automatically, translate that into a looping version:
 
 ```{r}
-tr_loop_factorial <- tailr::loop_transform(factorial)
-tr_loop_factorial
+tr_factorial <- tailr::loop_transform(factorial)
+tr_factorial
 
-tr_loop_factorial(100)
+tr_factorial(100)
 ```
 
 We can then compare the running time with the recursive function and a version that is written using a loop:
@@ -79,8 +81,101 @@ loop_factorial <- function(n) {
 
 
 n <- 1000
-microbenchmark::microbenchmark(factorial(n), loop_factorial(n), tr_loop_factorial(n))
+bm <- microbenchmark::microbenchmark(factorial(n), 
+                                     loop_factorial(n), 
+                                     tr_factorial(n))
+bm
+boxplot(bm)
 ```
 
-There is **massive** overhead in the translated version. I believe this is caused by assigning to variables where the environment is explicitly specified rather than just assigning to variables in the local environment. Simpler translations were faster. I'm working on improving this!
+There is *some* overhead in using the automatically translated version over the hand-written, naturally, and for a simple function such as `factorial`, it is not hard to write the loop-variant instead of the recursive function.
+
+However, consider a more complicated example. Using the `pmatch` package, we can create a linked list data structure as this:
+
+```{r}
+library(pmatch)
+llist := NIL | CONS(car, cdr : llist)
+```
+
+A natural way to process linked lists using pattern matching is to write recursive functions that matches different patterns of their input. A function for computing the length of a linked list can look like this:
+
+```{r}
+llength <- function(llist, acc = 0) {
+    cases(llist,
+          NIL -> acc,
+          CONS(car, cdr) -> llength(cdr, acc + 1))
+}
+```
+
+It is reasonably simple to understand this function, whereas a looping version is somewhat more complicated. An initial attempt could look like this:
+
+```r
+loop_llength <- function(llist) {
+    acc <- 0
+    repeat {
+        cases(llist,
+              NIL -> return(acc),
+              CONS(car, cdr) -> {
+                  acc <- acc + 1
+                  llist <- cdr
+              })
+    }
+}
+```
+
+This version will not function, however, since it tries to `return` from inside a call to `cases`, and `return` only works inside the immediate scope.
+
+Instead, we can use `callCC` to implement a non-local return like this:
+
+```{r}
+loop_llength <- function(llist) {
+    callCC(function(escape) {
+        acc <- 0
+        repeat {
+            cases(llist,
+                  NIL -> escape(acc),
+                  CONS(car, cdr) -> {
+                      acc <<- acc + 1
+                      llist <<- cdr
+                  })
+        }    
+    })
+}
+```
+
+Notice that we have to use the `<<-` assignment operator here. This is for the same reason that we need a non-local return. The expression inside the call to `cases` is evaluated in a different environment than the local function environment, so to get to the actual variables we want to assign to, we need the non-local assignment operator.
+
+It is possible to avoid `cases` using other functions from the `pmatch` package, but the result is vastly more compliated since pattern matching and expressions that should be evaluated per case needs to handle scoping. We can automatically make such a function using `tailr`, however:
+
+```{r}
+tr_llength <- tailr::loop_transform(llength)
+```
+
+The function we generate is rather complicated
+
+```{r}
+tr_llength
+```
+
+but, then, it is not one we want to manually inspect in any case.
+
+The automatically generated function is complicated, but it actually outcompetes the hand-written loop version.
+
+```{r}
+make_llist <- function(n) {
+    l <- NIL
+    for (i in 1:n) {
+        l <- CONS(i, l)
+    }
+    l
+}
+test_llist <- make_llist(100)
+bm <- microbenchmark::microbenchmark(llength(test_llist),
+                                     loop_llength(test_llist),
+                                     tr_llength(test_llist))
+bm
+boxplot(bm)
+```
+
+It is, of course, possible to write a faster hand-written function to deal with this case, but it will be about as complicated as the automatically generated function, and you don't really want to write that by hand.
 

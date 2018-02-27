@@ -19,15 +19,17 @@ factorial_tr_manual <- function (n, acc = 1)
 }
 
 factorial_tr_automatic_1 <- function(n, acc = 1) {
+    .tailr_n <- n
+    .tailr_acc <- acc
     callCC(function(escape) {
         repeat {
+            n <- .tailr_n
+            acc <- .tailr_acc
             if (n <= 1) {
                 escape(acc)
             } else {
-                .tailr_n <- n - 1
-                .tailr_acc <- n * acc
-                n <- .tailr_n
-                acc <- .tailr_acc
+                .tailr_n <<- n - 1
+                .tailr_acc <<- n * acc
             }
         }
     })
@@ -49,10 +51,13 @@ factorial_tr_automatic_2 <- function(n, acc = 1) {
     })
 }
 
+actual <- loop_transform(factorial)
+
 microbenchmark::microbenchmark(factorial(1000),
                                factorial_tr_manual(1000),
                                factorial_tr_automatic_1(1000),
-                               factorial_tr_automatic_2(1000))
+                               factorial_tr_automatic_2(1000),
+                               actual(1000))
 
 
 library(pmatch)

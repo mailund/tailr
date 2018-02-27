@@ -331,17 +331,13 @@ translate_recursive_call <- function(recursive_call, info) {
     arguments <- as.list(expanded_call)[-1]
     vars <- names(arguments)
     tmp_assignments <- vector("list", length = length(arguments))
-    final_assignments <- vector("list", length = length(arguments))
     for (i in seq_along(arguments)) {
-        tmp_var <- parse(text = paste(".tailr_env$.tailr_", vars[i], sep = ""))[[1]]
-        local_var <- parse(text = paste(".tailr_env$", vars[i], sep = ""))[[1]]
-        tmp_assignments[[i]] <- rlang::expr(!! tmp_var <- !! arguments[[i]])
-        final_assignments[[i]] <- rlang::expr(!! local_var <- !! tmp_var)
+        tmp_var <- parse(text = paste(".tailr_", vars[i], sep = ""))[[1]]
+        tmp_assignments[[i]] <- rlang::expr(!! tmp_var <<- !! arguments[[i]])
     }
     as.call(c(
         rlang::sym("{"),
-        tmp_assignments,
-        final_assignments
+        tmp_assignments
     ))
 }
 
@@ -470,6 +466,15 @@ simplify_nested_blocks <- function(expr) {
 #' @param info Information passed along the transformations.
 #' @return The body of the transformed function.
 build_transformed_function <- function(fun_expr, info) {
+    vars <- names(formals(info$fun))
+    tmp_assignments <- vector("list", length = length(vars))
+    locals_assignments <- vector("list", length = length(vars))
+    for (i in seq_along(vars)) {
+        local_var <- as.symbol(vars[[i]])
+        tmp_var <- parse(text = paste(".tailr_", vars[[i]], sep = ""))[[1]]
+        tmp_assignments[[i]] <- rlang::expr(!! tmp_var <- !! local_var)
+        locals_assignments[[i]] <- rlang::expr(!! local_var <- !! tmp_var)
+    }
 
     # this would be a nice pipeline, but it is a bit much to require
     # magrittr just for this
@@ -480,9 +485,10 @@ build_transformed_function <- function(fun_expr, info) {
     fun_expr <- simplify_nested_blocks(fun_expr)
 
     rlang::expr({
-        .tailr_env <- environment()
+        !!! tmp_assignments
         callCC(function(escape) {
             repeat {
+                !!! locals_assignments
                 !! fun_expr
             }
         })
