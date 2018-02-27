@@ -12,6 +12,17 @@ test_that("we can identify functions we can transform", {
     expect_true(can_loop_transform(factorial_acc))
 })
 
+test_that("we don't get confused by explicit returns", {
+    factorial <- function(n, acc = 1)
+        if (n <= 1) return(acc) else return(factorial(n - 1, n * acc))
+
+    expect_true(can_loop_transform(factorial))
+
+    tr_factorial <- loop_transform(factorial)
+    for (n in 1:5)
+        expect_equal(factorial(n), tr_factorial(n))
+})
+
 test_that("We report errors gracefully", {
     expect_error(
         can_loop_transform(function(x) x),
@@ -101,10 +112,10 @@ test_that("we cannot transform a non-tail-recursive function", {
 test_that("we can handle `with` expressions", {
     f <- function(x) {
         if (x < 0) {
-              x
-          } else {
-              with(list(y = -1), f(x + y))
-          }
+            x
+        } else {
+            with(list(y = -1), f(x + y))
+        }
     }
 
     expect_true(can_loop_transform(f))
