@@ -7,3 +7,4 @@
 ^LICENSE\.md$
 ^ISSUE_TEMPLATE\.md$
 ^cleanup.R$
+^experiments.R$

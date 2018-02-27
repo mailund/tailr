@@ -78,9 +78,9 @@ loop_factorial <- function(n) {
 }
 
 
-n <- 100
+n <- 1000
 microbenchmark::microbenchmark(factorial(n), loop_factorial(n), tr_loop_factorial(n))
 ```
 
-There is **massive** overhead in the translated version. I believe this is the parallel assignments that replace the recursive call, see Issue #7. Simpler translations were faster. I'm working on improving this!
+There is **massive** overhead in the translated version. I believe this is caused by assigning to variables where the environment is explicitly specified rather than just assigning to variables in the local environment. Simpler translations were faster. I'm working on improving this!
 

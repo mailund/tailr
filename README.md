@@ -6,7 +6,7 @@
 [![Project Status: Active – The project has reached a stable, usable
 state and is being actively
 developed.](http://www.repostatus.org/badges/latest/active.svg)](http://www.repostatus.org/#active)
-[![Last-changedate](https://img.shields.io/badge/last%20change-2018--02--10-orange.svg)](/commits/master)
+[![Last-changedate](https://img.shields.io/badge/last%20change-2018--02--27-orange.svg)](/commits/master)
 [![lifecycle](http://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://www.tidyverse.org/lifecycle/#experimental)
 [![Licence](https://img.shields.io/badge/licence-GPL--3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0.en.html)
 
@@ -58,18 +58,23 @@ tr_loop_factorial <- tailr::loop_transform(factorial)
 tr_loop_factorial
 #> function (n, acc = 1) 
 #> {
-#>     .tailr_env <- rlang::get_env()
-#>     .tailr_frame <- rlang::current_frame()
-#>     repeat {
-#>         if (n <= 1) 
-#>             rlang::return_from(.tailr_frame, acc)
-#>         else {
-#>             rlang::env_bind(.tailr_env, n = n - 1, acc = acc * 
-#>                 n)
-#>             rlang::return_to(.tailr_frame)
+#>     .tailr_env <- environment()
+#>     callCC(function(escape) {
+#>         repeat {
+#>             if (n <= 1) 
+#>                 escape(acc)
+#>             else {
+#>                 .tailr_env$.tailr_n <- n - 1
+#>                 .tailr_env$.tailr_acc <- acc * n
+#>                 .tailr_env$n <- .tailr_env$.tailr_n
+#>                 .tailr_env$acc <- .tailr_env$.tailr_acc
+#>             }
 #>         }
-#>     }
+#>     })
 #> }
+
+tr_loop_factorial(100)
+#> [1] 9.332622e+157
 ```
 
 We can then compare the running time with the recursive function and a
@@ -86,19 +91,21 @@ loop_factorial <- function(n) {
 }
 
 
-n <- 100
+n <- 1000
 microbenchmark::microbenchmark(factorial(n), loop_factorial(n), tr_loop_factorial(n))
 #> Unit: microseconds
-#>                  expr        min         lq        mean      median
-#>          factorial(n)     53.166     55.697     87.8910     70.4805
-#>     loop_factorial(n)      4.935      5.273     26.5116      6.0450
-#>  tr_loop_factorial(n) 123102.498 127133.018 137981.7610 131420.2170
-#>           uq        max neval
-#>      82.2595   1702.904   100
-#>       6.5275   2040.272   100
-#>  137787.8420 268219.932   100
+#>                  expr     min        lq      mean   median        uq
+#>          factorial(n) 872.705 1024.3590 1453.6825 1200.804 1675.7970
+#>     loop_factorial(n)  57.999   58.4155  102.9601   61.756   72.5320
+#>  tr_loop_factorial(n) 485.999  520.6690  694.8627  594.868  835.8945
+#>       max neval
+#>  6406.039   100
+#>  2866.583   100
+#>  1716.365   100
 ```
 
 There is **massive** overhead in the translated version. I believe this
-is the parallel assignments that replace the recursive call, see Issue
-\#7. Simpler translations were faster. I’m working on improving this\!
+is caused by assigning to variables where the environment is explicitly
+specified rather than just assigning to variables in the local
+environment. Simpler translations were faster. I’m working on improving
+this\!
