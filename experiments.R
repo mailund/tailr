@@ -64,25 +64,7 @@ llength <- function(llist, acc = 0) {
           CONS(car, cdr) -> llength(cdr, acc + 1))
 }
 
-llength_tr <- function (llist, acc = 0) {
-    .tailr_env <- rlang::get_env()
-    callCC(function(escape) {
-        repeat {
-            if (!rlang::is_null(..match_env <- test_pattern(llist,
-                                                            NIL)))
-                with(..match_env, escape(acc))
-
-            else if (!rlang::is_null(..match_env <-
-                                     test_pattern(llist, CONS(car, cdr))))
-                with(..match_env, {
-                    .tailr_env$.tailr_llist <- cdr
-                    .tailr_env$.tailr_acc <- acc + 1
-                    .tailr_env$llist <- .tailr_env$.tailr_llist
-                    .tailr_env$acc <- .tailr_env$.tailr_acc
-                })
-        }
-    })
-}
+llength_tr <- loop_transform(llength)
 
 make_llist <- function(n) {
     l <- NIL
@@ -91,25 +73,7 @@ make_llist <- function(n) {
     }
     l
 }
-test_llist <- make_llist(100)
+test_llist <- make_llist(10)
 microbenchmark::microbenchmark(llength(test_llist),
                                llength_tr(test_llist))
 
-
-
-
-arguments <- list(n = quote(n - 1), acc = quote(n * acc))
-vars <- names(arguments)
-tmp_assignments <- vector("list", length = length(arguments))
-final_assignments <- vector("list", length = length(arguments))
-for (i in seq_along(arguments)) {
-    tmp_var <- parse(text = paste(".tailr_env$.tailr_", vars[i], sep = ""))[[1]]
-    local_var <- parse(text = paste(".tailr_env$", vars[i], sep = ""))[[1]]
-    tmp_assignments[[i]] <- rlang::expr(!!tmp_var <- !!arguments[[i]])
-    final_assignments[[i]] <- rlang::expr(!!local_var <- !!tmp_var)
-}
-as.call(c(
-    rlang::sym("{"),
-    tmp_assignments,
-    final_assignments
-))

@@ -59,15 +59,22 @@ user_transform_rec <- function(expr, env = rlang::caller_env()) {
     } else {
         stopifnot(rlang::is_lang(expr))
 
-        fun_name <- rlang::call_name(expr)
-        if (!exists(fun_name, where = env)) {
+        # see if we can figure out which function we are dealing with...
+        fun_name <- as.character(expr[[1]])
+        if (length(grep("::", fun_name)) > 0) {
+            # the function name explicitly uses a namespace, so we get the
+            # actual function like this:
+            fun <- eval(expr[[1]])
+        } else if (exists(fun_name, where = env)) {
+            # otherwise, check if we have the function in scope
+            fun <- get(fun_name, envir = env)
+        } else {
             error_msg <- glue::glue(
                 "The function {fun_name} was not found in the provided scope."
             )
             stop(simpleError(error_msg, call = expr))
         }
 
-        fun <- get(fun_name, envir = env)
         args <- rlang::call_args(expr)
         for (i in seq_along(args)) {
             expr[[i + 1]] <- user_transform(args[[i]], env)

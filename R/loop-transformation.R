@@ -290,8 +290,8 @@ simplify_returns_call <- function(call_expr, info) {
         "return" = {
             call_expr[[2]] <- simplify_returns(call_args[[1]], info)
             if (rlang::is_lang(call_expr[[2]]) && rlang::call_name(call_expr[[2]]) == "return") {
-                  call_expr <- call_expr[[2]]
-              }
+                call_expr <- call_expr[[2]]
+            }
         },
 
         # For all other calls we transform the arguments inside a call context.
@@ -362,8 +362,8 @@ handle_recursive_returns_call <- function(call_expr, info) {
         "return" = {
             call_expr[[2]] <- handle_recursive_returns(call_args[[1]], info)
             if (rlang::is_lang(call_expr[[2]]) && rlang::call_name(call_expr[[2]]) == info$fun_name) {
-                  call_expr <- translate_recursive_call(call_expr[[2]], info)
-              }
+                call_expr <- translate_recursive_call(call_expr[[2]], info)
+            }
         },
 
         # For all other calls we just recurse
