@@ -2,7 +2,8 @@
 % Please edit documentation in R/loop-transformation.R
 \name{can_transform_rec}
 \alias{can_transform_rec}
-\title{Recursive call for testing if an expression can be transformed into a looping tail-recursion.}
+\title{Recursive call for testing if an expression can be transformed into a looping
+tail-recursion.}
 \usage{
 can_transform_rec(expr, fun_name, fun_call_allowed, cc)
 }
@@ -19,5 +20,6 @@ can_transform_rec(expr, fun_name, fun_call_allowed, cc)
 TRUE, if the expression can be transformed. Invokes \code{cc} otherwise.
 }
 \description{
-Recursive call for testing if an expression can be transformed into a looping tail-recursion.
+Recursive call for testing if an expression can be transformed into a looping
+tail-recursion.
 }
