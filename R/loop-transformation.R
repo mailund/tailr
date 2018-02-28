@@ -153,7 +153,7 @@ check_function_argument <- function(fun) {
     }
 }
 
-#' @describeIn can_loop_transform This version expects \code{fun_body} to be qboth tested
+#' @describeIn can_loop_transform This version expects \code{fun_body} to be both tested
 #'                                and user-transformed.
 #'
 #' @param fun_name Name of the recursive function.
