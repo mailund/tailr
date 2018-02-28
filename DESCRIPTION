@@ -1,7 +1,7 @@
 Package: tailr
 Version: 0.1.0
 Title: Automatic Tail Recursion Optimisation
-Description: This package implements meta-programming functions for automatically
+Description: Implements meta-programming functions for automatically
     translating recursive functions into looping functions or trampolines.
 Authors@R: person("Thomas", "Mailund", , "mailund@birc.au.dk", c("aut", "cre"))
 License: GPL-3
