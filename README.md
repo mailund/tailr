@@ -6,7 +6,7 @@
 [![Project Status: Active – The project has reached a stable, usable
 state and is being actively
 developed.](http://www.repostatus.org/badges/latest/active.svg)](http://www.repostatus.org/#active)
-[![Last-changedate](https://img.shields.io/badge/last%20change-2018--02--27-orange.svg)](/commits/master)
+[![Last-changedate](https://img.shields.io/badge/last%20change-2018--02--28-orange.svg)](/commits/master)
 [![lifecycle](http://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://www.tidyverse.org/lifecycle/#experimental)
 [![Licence](https://img.shields.io/badge/licence-GPL--3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0.en.html)
 
@@ -21,7 +21,7 @@ status](http://coveralls.io/repos/github/mailund/tailr/badge.svg?branch=master)]
 
 [![minimal R
 version](https://img.shields.io/badge/R%3E%3D-3.1-blue.svg)](https://cran.r-project.org/)
-[![packageversion](https://img.shields.io/badge/Package%20version-0.0.0.9003-orange.svg?style=flat-square)](commits/master)
+[![packageversion](https://img.shields.io/badge/Package%20version-0.0.0.9004-orange.svg?style=flat-square)](commits/master)
 <!--[![CRAN_Status_Badge](http://www.r-pkg.org/badges/version/tailr)](https://cran.r-project.org/package=tailr)
 -->
 
@@ -109,14 +109,14 @@ bm <- microbenchmark::microbenchmark(factorial(n),
                                      tr_factorial(n))
 bm
 #> Unit: microseconds
-#>               expr     min        lq      mean    median        uq
-#>       factorial(n) 847.791 1030.0675 1376.1084 1175.6350 1463.7640
-#>  loop_factorial(n)  61.760   64.9355  104.2284   67.3965   70.1890
-#>    tr_factorial(n) 194.036  213.9335  270.4690  238.0405  287.6175
-#>       max neval
-#>  8944.642   100
-#>  3074.322   100
-#>   552.738   100
+#>               expr     min       lq      mean   median       uq      max
+#>       factorial(n) 736.394 994.5110 1400.3118 1286.726 1614.871 9320.253
+#>  loop_factorial(n)  51.815  61.6665  142.5992   75.910  119.890 5561.984
+#>    tr_factorial(n) 162.779 211.4780  301.4939  268.552  374.352  672.439
+#>  neval
+#>    100
+#>    100
+#>    100
 boxplot(bm)
 ```
 
@@ -215,10 +215,10 @@ tr_llength
 #>         repeat {
 #>             llist <- .tailr_llist
 #>             acc <- .tailr_acc
-#>             if (!rlang::is_null(..match_env <- test_pattern(llist, 
+#>             if (!rlang::is_null(..match_env <- pmatch::test_pattern(llist, 
 #>                 NIL))) 
 #>                 with(..match_env, escape(acc))
-#>             else if (!rlang::is_null(..match_env <- test_pattern(llist, 
+#>             else if (!rlang::is_null(..match_env <- pmatch::test_pattern(llist, 
 #>                 CONS(car, cdr)))) 
 #>                 with(..match_env, {
 #>                   .tailr_llist <<- cdr
@@ -249,13 +249,13 @@ bm <- microbenchmark::microbenchmark(llength(test_llist),
 bm
 #> Unit: milliseconds
 #>                      expr      min       lq     mean   median       uq
-#>       llength(test_llist) 67.52501 83.05195 89.17195 87.66929 93.63144
-#>  loop_llength(test_llist) 74.29022 86.94136 94.64089 90.70131 97.17110
-#>    tr_llength(test_llist) 42.53179 50.94649 57.54708 56.66725 60.86652
+#>       llength(test_llist) 72.83178 80.59147 87.26963 86.15845 90.93959
+#>  loop_llength(test_llist) 68.87984 84.87835 91.44810 90.95442 95.51915
+#>    tr_llength(test_llist) 42.97351 53.91717 58.23168 56.63977 60.72165
 #>       max neval
-#>  154.7025   100
-#>  196.3967   100
-#>  145.5373   100
+#>  123.7698   100
+#>  145.3178   100
+#>  104.0721   100
 boxplot(bm)
 ```
 
