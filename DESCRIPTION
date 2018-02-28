@@ -17,6 +17,5 @@ Imports:
 Suggests: 
     covr,
     testthat,
-    microbenchmark,
-    pmatch (>= 0.1.2)
+    microbenchmark
 RoxygenNote: 6.0.1
