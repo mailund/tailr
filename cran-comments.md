@@ -1,8 +1,18 @@
 
 ## Test environments
+
 * local OS X install, R 3.4.3
 * ubuntu 14.04 (on travis-ci), R 3.4.3
 * win-builder (devel and release)
+* Windows Server 2008 R2 SP1, R-devel, 32/64 bit via rhub
+    - 1 warning:
+        pandoc.exe: Could not fetch 
+        http://www.repostatus.org/badges/latest/active.svg
+        no store
+        
+        this is a pandoc error and not a problem with the package
+* Ubuntu Linux 16.04 LTS, R-release, GCC via rhub
+* Fedora Linux, R-devel, clang, gfortran via rhub
 
 ## R CMD check results
 
