@@ -8,3 +8,4 @@
 ^ISSUE_TEMPLATE\.md$
 ^cleanup.R$
 ^experiments.R$
+^cran-comments\.md$
