@@ -3,7 +3,7 @@
 # we would otherwise get a complaint that `escape` is not defined. Everywhere
 # when we actually call a `escape` function, it is a continuation from calls to
 # `callCC`.
-escape <- function(x) x
+escape <- function(x) x # nocov
 
 ## Test for possibility of transformation #########################################
 
@@ -48,7 +48,7 @@ can_call_be_transformed <- function(call_name, call_arguments,
                     "are tail-recursive, so such expressions are not analysed and left alone in ",
                     "transformations."
                 ),
-                call = expr
+                call = rlang::expr(eval(!!! call_arguments))
             )
             warning(msg)
             return(TRUE) # get out, and hope the user knows what he is doing...
