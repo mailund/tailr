@@ -1,5 +1,5 @@
 Package: tailr
-Version: 0.0.0.9003
+Version: 0.0.0.9004
 Title: Automatic Tail Recursion Optimisation
 Description: This package implements meta-programming functions for automatically
     translating recursive functions into looping functions or trampolines.
@@ -17,6 +17,7 @@ Imports:
 Suggests: 
     covr,
     testthat,
-    microbenchmark
+    microbenchmark,
+    pmatch (>= 0.0.9003)
 RoxygenNote: 6.0.1
 Remotes: tidyverse/rlang
