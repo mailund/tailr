@@ -12,7 +12,7 @@ ByteCompile: true
 Depends: 
     R (>= 3.2)
 Imports:
-    rlang,
+    rlang (>= 0.2.0),
     glue
 Suggests: 
     covr,
@@ -21,5 +21,4 @@ Suggests:
     pmatch (>= 0.1.1.9003)
 RoxygenNote: 6.0.1
 Remotes:
-    tidyverse/rlang,
     mailund/pmatch
