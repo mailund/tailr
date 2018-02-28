@@ -10,3 +10,8 @@
 
 * This is an initial release.
 * This is also a resubmission where "This package" was removed from DESCRIPTION
+* Also a resubmission where I have removed Suggest dependencies on a package
+  with inappropriate version number (I have a circular dependency between the two
+  packages, but only through the tests; the packages use a hook mechanism to 
+  communicate, so it was not a real dependency).
+

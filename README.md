@@ -21,9 +21,8 @@ status](http://coveralls.io/repos/github/mailund/tailr/badge.svg?branch=master)]
 
 [![minimal R
 version](https://img.shields.io/badge/R%3E%3D-3.1-blue.svg)](https://cran.r-project.org/)
-[![packageversion](https://img.shields.io/badge/Package%20version-0.0.0.9004-orange.svg?style=flat-square)](commits/master)
-<!--[![CRAN_Status_Badge](http://www.r-pkg.org/badges/version/tailr)](https://cran.r-project.org/package=tailr)
--->
+[![packageversion](https://img.shields.io/badge/Package%20version-0.1.0-green.svg?style=flat-square)](commits/master)
+[![CRAN\_Status\_Badge](http://www.r-pkg.org/badges/version/tailr)](https://cran.r-project.org/package=tailr)
 
 -----
 
@@ -109,14 +108,14 @@ bm <- microbenchmark::microbenchmark(factorial(n),
                                      tr_factorial(n))
 bm
 #> Unit: microseconds
-#>               expr     min        lq       mean    median        uq
-#>       factorial(n) 768.987 1007.2740 1376.35785 1186.9830 1485.1370
-#>  loop_factorial(n)  50.991   58.2555   99.13528   60.5740   72.4875
-#>    tr_factorial(n) 161.860  200.5610  297.92496  267.7905  306.8475
-#>       max neval
-#>  8258.888   100
-#>  3083.117   100
-#>  1345.865   100
+#>               expr      min        lq      mean   median       uq      max
+#>       factorial(n) 1060.171 1549.4740 1913.4090 1713.880 1944.354 8509.096
+#>  loop_factorial(n)   58.790   84.8125  146.6675  102.599  106.656 5168.802
+#>    tr_factorial(n)  188.604  273.1550  418.8421  388.853  446.079 2951.480
+#>  neval
+#>    100
+#>    100
+#>    100
 boxplot(bm)
 ```
 
@@ -248,14 +247,14 @@ bm <- microbenchmark::microbenchmark(llength(test_llist),
                                      tr_llength(test_llist))
 bm
 #> Unit: milliseconds
-#>                      expr      min       lq     mean   median       uq
-#>       llength(test_llist) 65.81549 71.36477 77.33572 76.05853 81.79734
-#>  loop_llength(test_llist) 69.58502 78.42736 83.61448 82.31118 85.46040
-#>    tr_llength(test_llist) 39.44197 46.84854 51.39895 50.24122 54.59113
-#>        max neval
-#>  131.65867   100
-#>  139.24235   100
-#>   97.58773   100
+#>                      expr      min       lq     mean   median        uq
+#>       llength(test_llist) 68.07866 76.34487 89.97757 81.73584  89.41849
+#>  loop_llength(test_llist) 73.21940 81.79118 98.12486 89.10334 102.31499
+#>    tr_llength(test_llist) 43.32049 49.75380 57.50893 54.22610  59.83531
+#>       max neval
+#>  331.3670   100
+#>  267.8227   100
+#>  200.1066   100
 boxplot(bm)
 ```
 
