@@ -125,3 +125,22 @@ test_that("we can handle `with` expressions", {
         expect_equal(f(x), transformed_f(x))
     }
 })
+
+test_that("we warn about eval expressions, but leave them alone", {
+    # a valid tail-recurive function
+    f <- function(x) if (x < 0) x else eval(quote(f(-1)))
+    # an invalid tail-recursive function
+    g <- function(x) if (x < 0) x else eval(quote(g(-1) + g(-2)))
+
+    expect_warning(
+        can_loop_transform(f),
+        "This function contains an eval-expression.*"
+    )
+    expect_warning(
+        can_loop_transform(g),
+        "This function contains an eval-expression.*"
+    )
+
+    # I'm not sure how to easilly check that eval-expressions are
+    # left alone, though...
+})

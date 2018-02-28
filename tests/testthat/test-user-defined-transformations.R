@@ -29,12 +29,14 @@ test_that("we can use user-defined re-writing rules from another package", {
         return()
     }
 
-    pmatch::`:=`(llists, NIL | CONS(car, cdr : llists))
+    pmatch::`:=`(llists, NIL | CONS(car, cdr:llists))
 
     llength <- function(llist, acc = 0) {
-        pmatch::cases(llist,
-                      NIL -> acc,
-                      CONS(car, cdr) -> llength(cdr, acc + 1))
+        pmatch::cases(
+            llist,
+            NIL -> acc,
+            CONS(car, cdr) -> llength(cdr, acc + 1)
+        )
     }
     llength <- tailr::loop_transform(llength)
 
