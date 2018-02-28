@@ -42,8 +42,16 @@ can_call_be_transformed <- function(call_name, call_arguments,
         # handle them when it comes to what they return, though, since it depends
         # on the expression they will evaluate
         "eval" = {
-            warning("We can't yet handle eval expressions.")
-            cc(FALSE)
+            msg <- simpleWarning(
+                glue::glue(
+                    "This function contains an eval-expression. It is hard to work out if those ",
+                    "are tail-recursive, so such expressions are not analysed and left alone in ",
+                    "transformations."
+                ),
+                call = expr
+            )
+            warning(msg)
+            return(TRUE) # get out, and hope the user knows what he is doing...
         },
 
         # With expressions are a bit like eval, I guess... don't consider them
@@ -235,9 +243,9 @@ make_returns_explicit_call <- function(call_expr, in_function_parameter, info) {
 
         # Not sure how to handle eval, exactly...
         # The problem here is that I need to return the expression if it is not a recursive call
-        # but not if it is...
+        # but not if it is... the check gives a warning, so here we just do nothing
         "eval" = {
-            stop("FIXME")
+            # do nothing
         },
 
         # With should just be left alone and we can deal with the expression it evaluates
