@@ -179,3 +179,20 @@ boxplot(bm)
 
 It is, of course, possible to write a faster hand-written function to deal with this case, but it will be about as complicated as the automatically generated function, and you don't really want to write that by hand.
 
+As you have no doubt noticed about `llength`, it is not in fact tail-recursive, from the look of it, since the final recursion is enclosed by a call to `cases`. The function is only tail-recursive because it can be translated into one by rewriting the `cases` function call to a sequence of `if`-statements. The `tailr` package doesn't handle `cases` from `pmatch` by knowing about this package. Instead, it has a mechanism that lets you provide re-writing rules.
+
+If you set the attribute "tailr_transform" on a function, and set this attribute to a function, then that function will be called when `tailr` sees the function, before it attempts any other processing. The attribute must be a function that maps an expression to another, re-written, expression. The one for `cases` looks like this:
+
+```r
+tailr_transform_call <- function(expr) {
+    stopifnot(rlang::call_name(expr) == "cases")
+
+    args <- rlang::call_args(expr)
+    value <- args[[1]]
+    patterns <- args[-1]
+    eval(rlang::expr(cases_expr(!!value, !!!patterns)))
+}
+attr(cases, "tailr_transform") <- tailr_transform_call
+```
+
+You can use this mechanism to support tail-recursion for non-tail-recursive functions that can be rewritten to be tail-recursive.

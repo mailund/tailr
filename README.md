@@ -109,14 +109,14 @@ bm <- microbenchmark::microbenchmark(factorial(n),
                                      tr_factorial(n))
 bm
 #> Unit: microseconds
-#>               expr     min       lq      mean   median       uq      max
-#>       factorial(n) 736.394 994.5110 1400.3118 1286.726 1614.871 9320.253
-#>  loop_factorial(n)  51.815  61.6665  142.5992   75.910  119.890 5561.984
-#>    tr_factorial(n) 162.779 211.4780  301.4939  268.552  374.352  672.439
-#>  neval
-#>    100
-#>    100
-#>    100
+#>               expr     min        lq       mean    median        uq
+#>       factorial(n) 768.987 1007.2740 1376.35785 1186.9830 1485.1370
+#>  loop_factorial(n)  50.991   58.2555   99.13528   60.5740   72.4875
+#>    tr_factorial(n) 161.860  200.5610  297.92496  267.7905  306.8475
+#>       max neval
+#>  8258.888   100
+#>  3083.117   100
+#>  1345.865   100
 boxplot(bm)
 ```
 
@@ -249,13 +249,13 @@ bm <- microbenchmark::microbenchmark(llength(test_llist),
 bm
 #> Unit: milliseconds
 #>                      expr      min       lq     mean   median       uq
-#>       llength(test_llist) 72.83178 80.59147 87.26963 86.15845 90.93959
-#>  loop_llength(test_llist) 68.87984 84.87835 91.44810 90.95442 95.51915
-#>    tr_llength(test_llist) 42.97351 53.91717 58.23168 56.63977 60.72165
-#>       max neval
-#>  123.7698   100
-#>  145.3178   100
-#>  104.0721   100
+#>       llength(test_llist) 65.81549 71.36477 77.33572 76.05853 81.79734
+#>  loop_llength(test_llist) 69.58502 78.42736 83.61448 82.31118 85.46040
+#>    tr_llength(test_llist) 39.44197 46.84854 51.39895 50.24122 54.59113
+#>        max neval
+#>  131.65867   100
+#>  139.24235   100
+#>   97.58773   100
 boxplot(bm)
 ```
 
@@ -265,3 +265,32 @@ It is, of course, possible to write a faster hand-written function to
 deal with this case, but it will be about as complicated as the
 automatically generated function, and you don’t really want to write
 that by hand.
+
+As you have no doubt noticed about `llength`, it is not in fact
+tail-recursive, from the look of it, since the final recursion is
+enclosed by a call to `cases`. The function is only tail-recursive
+because it can be translated into one by rewriting the `cases` function
+call to a sequence of `if`-statements. The `tailr` package doesn’t
+handle `cases` from `pmatch` by knowing about this package. Instead, it
+has a mechanism that lets you provide re-writing rules.
+
+If you set the attribute “tailr\_transform” on a function, and set this
+attribute to a function, then that function will be called when `tailr`
+sees the function, before it attempts any other processing. The
+attribute must be a function that maps an expression to another,
+re-written, expression. The one for `cases` looks like this:
+
+``` r
+tailr_transform_call <- function(expr) {
+    stopifnot(rlang::call_name(expr) == "cases")
+
+    args <- rlang::call_args(expr)
+    value <- args[[1]]
+    patterns <- args[-1]
+    eval(rlang::expr(cases_expr(!!value, !!!patterns)))
+}
+attr(cases, "tailr_transform") <- tailr_transform_call
+```
+
+You can use this mechanism to support tail-recursion for
+non-tail-recursive functions that can be rewritten to be tail-recursive.
