@@ -29,7 +29,7 @@ provided as a bare symbol.
 }
 \section{Functions}{
 \itemize{
-\item \code{can_loop_transform_body}: This version expects \code{fun_body} to be qboth tested
+\item \code{can_loop_transform_body}: This version expects \code{fun_body} to be both tested
 and user-transformed.
 
 \item \code{can_loop_transform_}: This version expects \code{fun} to be quosure.
