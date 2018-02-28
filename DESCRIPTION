@@ -20,4 +20,6 @@ Suggests:
     microbenchmark,
     pmatch (>= 0.1.1.9003)
 RoxygenNote: 6.0.1
-Remotes: tidyverse/rlang
+Remotes:
+    tidyverse/rlang,
+    mailund/pmatch
