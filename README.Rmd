@@ -40,6 +40,12 @@ The goal of `tailr` is to automatically transform tail-recursive functions into 
 
 ## Installation
 
+You can install the released version of `tailr` from CRAN using
+
+``` r
+install.packages("tailr")
+```
+
 You can install tailr from GitHub with:
 
 ```{r gh-installation, eval = FALSE}
