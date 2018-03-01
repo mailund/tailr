@@ -7,7 +7,7 @@
 [![Project Status: Active – The project has reached a stable, usable
 state and is being actively
 developed.](http://www.repostatus.org/badges/latest/active.svg)](http://www.repostatus.org/#active)
-[![lifecycle](http://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://www.tidyverse.org/lifecycle/#experimental)
+[![lifecycle](https://img.shields.io/badge/lifecycle-maturing-blue.svg)](https://www.tidyverse.org/lifecycle/#maturing)
 [![Last-changedate](https://img.shields.io/badge/last%20change-2018--03--01-orange.svg)](/commits/master)
 [![packageversion](https://img.shields.io/badge/Package%20version-0.1.0.9000-orange.svg?style=flat-square)](commits/master)
 
@@ -44,6 +44,12 @@ The goal of `tailr` is to automatically transform tail-recursive
 functions into loops or trampolines.
 
 ## Installation
+
+You can install the released version of `tailr` from CRAN using
+
+``` r
+install.packages("tailr")
+```
 
 You can install tailr from GitHub with:
 
@@ -116,14 +122,14 @@ bm <- microbenchmark::microbenchmark(factorial(n),
                                      tr_factorial(n))
 bm
 #> Unit: microseconds
-#>               expr     min       lq      mean    median        uq
-#>       factorial(n) 889.702 985.8175 1387.5000 1112.9125 1493.1710
-#>  loop_factorial(n)  60.305  60.8165  109.5417   63.2085   66.8085
-#>    tr_factorial(n) 184.994 200.6380  275.9728  216.4670  301.7170
+#>               expr     min        lq      mean    median       uq
+#>       factorial(n) 903.457 1047.9920 1474.2318 1292.6960 1613.522
+#>  loop_factorial(n)  60.581   64.0740  125.4481   70.2715  114.594
+#>    tr_factorial(n) 187.846  214.0985  304.6220  274.7155  367.581
 #>        max neval
-#>  12947.143   100
-#>   4328.684   100
-#>    918.225   100
+#>  10646.153   100
+#>   3257.254   100
+#>    819.799   100
 boxplot(bm)
 ```
 
@@ -234,7 +240,7 @@ tr_llength
 #>         }
 #>     })
 #> }
-#> <bytecode: 0x7f89abf222e8>
+#> <bytecode: 0x7fa6fc51e878>
 ```
 
 but, then, it is not one we want to manually inspect in any case.
@@ -256,14 +262,14 @@ bm <- microbenchmark::microbenchmark(llength(test_llist),
                                      tr_llength(test_llist))
 bm
 #> Unit: milliseconds
-#>                      expr      min       lq      mean   median        uq
-#>       llength(test_llist) 65.18897 81.51364  92.38596 88.85732  98.14370
-#>  loop_llength(test_llist) 71.72432 89.69168 103.20678 96.86394 106.55124
-#>    tr_llength(test_llist) 42.01030 56.27703  64.10798 59.99802  69.40678
-#>       max neval
-#>  162.2611   100
-#>  334.9944   100
-#>  163.7440   100
+#>                      expr      min       lq     mean   median       uq
+#>       llength(test_llist) 65.29950 71.96602 76.70787 75.52536 80.73864
+#>  loop_llength(test_llist) 73.29198 79.22707 83.82211 82.37145 86.39553
+#>    tr_llength(test_llist) 42.13560 47.16231 50.56279 49.92456 52.89348
+#>        max neval
+#>  131.01727   100
+#>  131.20724   100
+#>   79.30786   100
 boxplot(bm)
 ```
 
