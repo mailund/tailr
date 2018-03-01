@@ -4,12 +4,12 @@
 # tailr – Tail recursion optimisations for R programming
 
 [![Licence](https://img.shields.io/badge/licence-GPL--3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0.en.html)
+[![lifecycle](https://img.shields.io/badge/lifecycle-maturing-blue.svg)](https://www.tidyverse.org/lifecycle/#maturing)
 [![Project Status: Active – The project has reached a stable, usable
 state and is being actively
 developed.](http://www.repostatus.org/badges/latest/active.svg)](http://www.repostatus.org/#active)
-[![lifecycle](https://img.shields.io/badge/lifecycle-maturing-blue.svg)](https://www.tidyverse.org/lifecycle/#maturing)
-[![Last-changedate](https://img.shields.io/badge/last%20change-2018--03--01-orange.svg)](/commits/master)
-[![packageversion](https://img.shields.io/badge/Package%20version-0.1.0.9000-orange.svg?style=flat-square)](commits/master)
+[![Last-changedate](https://img.shields.io/badge/last%20change-2018--03--01-green.svg)](/commits/master)
+[![packageversion](https://img.shields.io/badge/Package%20version-0.1.0.9000-green.svg?style=flat-square)](commits/master)
 
 [![Travis build
 status](https://travis-ci.org/mailund/tailr.svg?branch=master)](https://travis-ci.org/mailund/tailr)
@@ -122,14 +122,14 @@ bm <- microbenchmark::microbenchmark(factorial(n),
                                      tr_factorial(n))
 bm
 #> Unit: microseconds
-#>               expr     min        lq      mean    median       uq
-#>       factorial(n) 903.457 1047.9920 1474.2318 1292.6960 1613.522
-#>  loop_factorial(n)  60.581   64.0740  125.4481   70.2715  114.594
-#>    tr_factorial(n) 187.846  214.0985  304.6220  274.7155  367.581
-#>        max neval
-#>  10646.153   100
-#>   3257.254   100
-#>    819.799   100
+#>               expr     min       lq      mean    median        uq      max
+#>       factorial(n) 915.490 993.3580 1242.0908 1049.0525 1294.5065 8020.541
+#>  loop_factorial(n)  63.154  65.1075  106.8807   67.8685   72.3585 3422.841
+#>    tr_factorial(n) 183.079 201.7145  254.5395  217.2860  270.8500 1042.639
+#>  neval
+#>    100
+#>    100
+#>    100
 boxplot(bm)
 ```
 
@@ -240,7 +240,7 @@ tr_llength
 #>         }
 #>     })
 #> }
-#> <bytecode: 0x7fa6fc51e878>
+#> <bytecode: 0x7fe11b0883f8>
 ```
 
 but, then, it is not one we want to manually inspect in any case.
@@ -263,13 +263,13 @@ bm <- microbenchmark::microbenchmark(llength(test_llist),
 bm
 #> Unit: milliseconds
 #>                      expr      min       lq     mean   median       uq
-#>       llength(test_llist) 65.29950 71.96602 76.70787 75.52536 80.73864
-#>  loop_llength(test_llist) 73.29198 79.22707 83.82211 82.37145 86.39553
-#>    tr_llength(test_llist) 42.13560 47.16231 50.56279 49.92456 52.89348
-#>        max neval
-#>  131.01727   100
-#>  131.20724   100
-#>   79.30786   100
+#>       llength(test_llist) 62.83734 70.42454 79.87564 75.76874 84.40722
+#>  loop_llength(test_llist) 64.96645 75.61720 85.98287 81.99561 90.02652
+#>    tr_llength(test_llist) 40.61448 46.72366 54.43987 50.22399 58.79248
+#>       max neval
+#>  128.6517   100
+#>  143.6397   100
+#>   96.3314   100
 boxplot(bm)
 ```
 
