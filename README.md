@@ -8,7 +8,7 @@ state and is being actively
 developed.](http://www.repostatus.org/badges/latest/active.svg)](http://www.repostatus.org/#active)
 [![lifecycle](http://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://www.tidyverse.org/lifecycle/#experimental)
 [![Licence](https://img.shields.io/badge/licence-GPL--3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0.en.html)
-[![Last-changedate](https://img.shields.io/badge/last%20change-2018--02--28-orange.svg)](/commits/master)
+[![Last-changedate](https://img.shields.io/badge/last%20change-2018--03--01-orange.svg)](/commits/master)
 [![packageversion](https://img.shields.io/badge/Package%20version-0.1.0.9000-orange.svg?style=flat-square)](commits/master)
 
 [![Travis build
@@ -67,7 +67,7 @@ factorial <- function(n, acc = 1) {
 We can then, automatically, translate that into a looping version:
 
 ``` r
-tr_factorial <- tailr::loop_transform(factorial)
+tr_factorial <- tailr::loop_transform(factorial, byte_compile = FALSE)
 tr_factorial
 #> function (n, acc = 1) 
 #> {
@@ -91,7 +91,12 @@ tr_factorial(100)
 #> [1] 9.332622e+157
 ```
 
-We can then compare the running time with the recursive function and a
+I have disabled byte compilation to make running time comparisons fair;
+by default it is enabled. For a function as simple as `factorial`,
+though, byte compiling will not affect the running time in any
+substantial amount.
+
+We can compare the running time with the recursive function and a
 version that is written using a loop:
 
 ``` r
@@ -111,10 +116,10 @@ bm <- microbenchmark::microbenchmark(factorial(n),
                                      tr_factorial(n))
 bm
 #> Unit: microseconds
-#>               expr     min       lq      mean    median        uq      max
-#>       factorial(n) 866.557 925.8215 1296.7829 1132.6240 1383.6285 6029.079
-#>  loop_factorial(n)  65.069  66.1350  106.4048   68.7425   96.4105 2719.334
-#>    tr_factorial(n) 179.434 191.6275  270.9018  211.2115  314.7210  572.851
+#>               expr     min      lq      mean   median       uq       max
+#>       factorial(n) 861.072 972.132 1437.0898 1195.014 1592.341 11238.499
+#>  loop_factorial(n)  59.110  63.269  114.9509   66.025   98.858  3328.601
+#>    tr_factorial(n) 183.286 206.518  303.7384  246.107  345.306   749.137
 #>  neval
 #>    100
 #>    100
@@ -229,6 +234,7 @@ tr_llength
 #>         }
 #>     })
 #> }
+#> <bytecode: 0x7fb467e45238>
 ```
 
 but, then, it is not one we want to manually inspect in any case.
@@ -251,13 +257,13 @@ bm <- microbenchmark::microbenchmark(llength(test_llist),
 bm
 #> Unit: milliseconds
 #>                      expr      min       lq     mean   median       uq
-#>       llength(test_llist) 64.59915 72.29105 76.27258 75.48120 78.59879
-#>  loop_llength(test_llist) 70.10497 77.76362 81.55232 81.82694 84.65994
-#>    tr_llength(test_llist) 39.91190 47.63133 51.90741 50.62078 54.83012
+#>       llength(test_llist) 62.34987 73.62407 78.33209 77.36216 81.96653
+#>  loop_llength(test_llist) 69.30205 78.13585 85.31827 82.62961 88.71464
+#>    tr_llength(test_llist) 41.25113 47.41965 52.15089 50.15381 54.34982
 #>       max neval
-#>  121.3059   100
-#>  108.4509   100
-#>  104.5723   100
+#>  118.9726   100
+#>  148.7936   100
+#>  111.2254   100
 boxplot(bm)
 ```
 

@@ -38,9 +38,10 @@ can_call_be_transformed <- function(call_name, call_arguments,
         },
 
         # Eval is really just evaluation of an expression in the calling scope,
-        # so we shouldn't consider those function calls either... I'm not sure how to
-        # handle them when it comes to what they return, though, since it depends
-        # on the expression they will evaluate
+        # so we shouldn't consider those function calls either... I'm not sure
+        # how to handle them when it comes to what they return, though, since it
+        # depends on the expression they will evaluate
+
         "eval" = {
             msg <- simpleWarning(
                 glue::glue(
@@ -514,10 +515,12 @@ build_transformed_function <- function(fun_expr, info) {
 #' Since this function needs to handle recursive functions, it needs to know the
 #' name of its input function, so this must be provided as a bare symbol.
 #'
-#' @param fun The function to transform. Must be provided as a bare name.
+#' @param fun          The function to transform. Must be provided as a bare name.
+#' @param byte_compile Flag specifying whether to compile the function after
+#'                     transformation.
 #'
 #' @export
-loop_transform <- function(fun) {
+loop_transform <- function(fun, byte_compile = TRUE) {
     fun_q <- rlang::enquo(fun)
     check_function_argument(fun_q)
 
@@ -533,9 +536,27 @@ loop_transform <- function(fun) {
     info <- list(fun = fun, fun_name = fun_name)
 
     new_fun_body <- build_transformed_function(fun_body, info)
-    rlang::new_function(
+    result <- rlang::new_function(
         args = formals(fun),
         body = new_fun_body,
         env = rlang::get_env(fun_q)
     )
+
+    if (byte_compile) {
+        if (!requireNamespace("compiler")) { # nocov start
+            msg <- simpleWarning(
+                glue::glue(
+                    "The compiler package is not installed, so the ",
+                    "function will not be byte-compiled.\n",
+                    "To disable this warning, install the package, or ",
+                    "set the flag byte_compile to FALSE."
+                )
+            )
+            warning(msg)
+            return(result)
+        } # nocov end
+        result <- compiler::cmpfun(result)
+    }
+
+    result
 }

@@ -62,13 +62,15 @@ factorial <- function(n, acc = 1) {
 We can then, automatically, translate that into a looping version:
 
 ```{r}
-tr_factorial <- tailr::loop_transform(factorial)
+tr_factorial <- tailr::loop_transform(factorial, byte_compile = FALSE)
 tr_factorial
 
 tr_factorial(100)
 ```
 
-We can then compare the running time with the recursive function and a version that is written using a loop:
+I have disabled byte compilation to make running time comparisons fair; by default it is enabled. For a function as simple as `factorial`, though, byte compiling will not affect the running time in any substantial amount. 
+
+We can compare the running time with the recursive function and a version that is written using a loop:
 
 ```{r}
 loop_factorial <- function(n) {

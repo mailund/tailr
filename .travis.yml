@@ -12,6 +12,9 @@ r:
 - release
 - devel
 
-after_success:
+r_github_packages:
+  - r-lib/covr
+
+ after_success:
   - Rscript -e 'covr::codecov()'
   - Rscript -e 'covr::coveralls()'
