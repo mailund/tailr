@@ -3,11 +3,11 @@
 
 # tailr – Tail recursion optimisations for R programming
 
+[![Licence](https://img.shields.io/badge/licence-GPL--3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0.en.html)
 [![Project Status: Active – The project has reached a stable, usable
 state and is being actively
 developed.](http://www.repostatus.org/badges/latest/active.svg)](http://www.repostatus.org/#active)
 [![lifecycle](http://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://www.tidyverse.org/lifecycle/#experimental)
-[![Licence](https://img.shields.io/badge/licence-GPL--3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0.en.html)
 [![Last-changedate](https://img.shields.io/badge/last%20change-2018--03--01-orange.svg)](/commits/master)
 [![packageversion](https://img.shields.io/badge/Package%20version-0.1.0.9000-orange.svg?style=flat-square)](commits/master)
 
@@ -116,14 +116,14 @@ bm <- microbenchmark::microbenchmark(factorial(n),
                                      tr_factorial(n))
 bm
 #> Unit: microseconds
-#>               expr     min      lq      mean   median       uq       max
-#>       factorial(n) 861.072 972.132 1437.0898 1195.014 1592.341 11238.499
-#>  loop_factorial(n)  59.110  63.269  114.9509   66.025   98.858  3328.601
-#>    tr_factorial(n) 183.286 206.518  303.7384  246.107  345.306   749.137
-#>  neval
-#>    100
-#>    100
-#>    100
+#>               expr     min       lq      mean    median        uq
+#>       factorial(n) 889.702 985.8175 1387.5000 1112.9125 1493.1710
+#>  loop_factorial(n)  60.305  60.8165  109.5417   63.2085   66.8085
+#>    tr_factorial(n) 184.994 200.6380  275.9728  216.4670  301.7170
+#>        max neval
+#>  12947.143   100
+#>   4328.684   100
+#>    918.225   100
 boxplot(bm)
 ```
 
@@ -234,7 +234,7 @@ tr_llength
 #>         }
 #>     })
 #> }
-#> <bytecode: 0x7fb467e45238>
+#> <bytecode: 0x7f89abf222e8>
 ```
 
 but, then, it is not one we want to manually inspect in any case.
@@ -256,14 +256,14 @@ bm <- microbenchmark::microbenchmark(llength(test_llist),
                                      tr_llength(test_llist))
 bm
 #> Unit: milliseconds
-#>                      expr      min       lq     mean   median       uq
-#>       llength(test_llist) 62.34987 73.62407 78.33209 77.36216 81.96653
-#>  loop_llength(test_llist) 69.30205 78.13585 85.31827 82.62961 88.71464
-#>    tr_llength(test_llist) 41.25113 47.41965 52.15089 50.15381 54.34982
+#>                      expr      min       lq      mean   median        uq
+#>       llength(test_llist) 65.18897 81.51364  92.38596 88.85732  98.14370
+#>  loop_llength(test_llist) 71.72432 89.69168 103.20678 96.86394 106.55124
+#>    tr_llength(test_llist) 42.01030 56.27703  64.10798 59.99802  69.40678
 #>       max neval
-#>  118.9726   100
-#>  148.7936   100
-#>  111.2254   100
+#>  162.2611   100
+#>  334.9944   100
+#>  163.7440   100
 boxplot(bm)
 ```
 
