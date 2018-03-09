@@ -144,3 +144,31 @@ test_that("we warn about eval expressions, but leave them alone", {
     # I'm not sure how to easilly check that eval-expressions are
     # left alone, though...
 })
+
+test_that("we handle local varibles when they are functions", {
+    if (!requireNamespace("pmatch", quietly = TRUE)) {
+        skip("pmatch not installed so we cannot run this test")
+        return()
+    }
+    library(pmatch)
+
+    llist := NIL | CONS(car, cdr:llist)
+
+    llrev <- function(llist, acc = NIL) {
+        pmatch::cases(
+            llist,
+            NIL -> acc,
+            CONS(car, cdr) -> llrev(cdr, CONS(car, acc))
+        )
+    }
+    llrev <- tailr::loop_transform(llrev)
+
+    llmap <- function(llist, f, acc = NIL) {
+        pmatch::cases(
+            llist,
+            NIL -> llrev(acc),
+            CONS(car, cdr) -> llmap(cdr, f, CONS(f(car), acc))
+        )
+    }
+    #expect_true(can_loop_transform(llmap))
+})
