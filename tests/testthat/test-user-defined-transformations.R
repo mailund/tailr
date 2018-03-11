@@ -19,7 +19,7 @@ test_that("we transform functions with user-defined re-writing rules", {
     attr(my_if_else, "tailr_transform") <- my_if_else_transform
 
     f <- function(x, y) my_if_else(x == y, x, f(y, y))
-    transformed_body <- user_transform(body(f))
+    transformed_body <- user_transform(body(f), f)
     expect_equal(transformed_body, quote(if (x == y) x else f(y, y)))
 })
 
@@ -63,7 +63,7 @@ test_that("we handle errors", {
     )
 
     expect_error(
-        user_transform(body(f)),
+        user_transform(body(f), f),
         regexp = "The function g was not found in the provided scope."
     )
 })

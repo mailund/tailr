@@ -5,23 +5,28 @@
 #' function does not perform type checks before calling recursively while \code{\link{user_transform}}
 #' does.
 #'
+#' @param fun  The actual function to transform.
 #' @param expr The expression to transform -- typically a function body.
 #' @param env  The environment where functions can be found.
 #'
 #' @return Rewritten expression
-user_transform_rec <- function(expr, env = rlang::caller_env()) {
+user_transform_rec <- function(fun, expr, env) {
     if (rlang::is_atomic(expr) || rlang::is_pairlist(expr) ||
         rlang::is_symbol(expr) || rlang::is_primitive(expr)) {
         expr
     } else {
         stopifnot(rlang::is_lang(expr))
+        stopifnot(is.function(fun))
 
         # see if we can figure out which function we are dealing with...
-        fun <- tryCatch(rlang::call_fn(expr), error = function(e) NULL)
-        if (is.null(fun)) {
+        call_fun <- tryCatch(rlang::call_fn(expr), error = function(e) NULL)
+        if (is.null(call_fun)) {
             fun_name <- rlang::call_name(expr)
-            if (exists(fun_name, env)) {
-                fun <- get(fun_name, envir = env)
+            if (fun_name %in% names(formals(fun))) {
+                # the function isn't known until runtime, so we can't do anything here
+                call_fun <- NULL
+            } else if (exists(fun_name, env)) {
+                call_fun <- get(fun_name, envir = env)
             } else {
                 error_msg <- glue::glue(
                     "The function {fun_name} was not found in the provided scope."
@@ -32,9 +37,10 @@ user_transform_rec <- function(expr, env = rlang::caller_env()) {
 
         args <- rlang::call_args(expr)
         for (i in seq_along(args)) {
-            expr[[i + 1]] <- user_transform(args[[i]], env)
+            expr[[i + 1]] <- user_transform(args[[i]], fun, env)
         }
-        if (!rlang::is_null(transformer <- attr(fun, "tailr_transform"))) {
+        if (!is.null(call_fun) &&
+            !rlang::is_null(transformer <- attr(call_fun, "tailr_transform"))) {
             expr <- transformer(expr)
         }
         expr
@@ -43,26 +49,13 @@ user_transform_rec <- function(expr, env = rlang::caller_env()) {
 
 #' Apply user transformations depths-first.
 #'
+#' @param fun  The actual function to transform.
 #' @param expr The expression to transform -- typically a function body.
-#' @param env  The environment where functions can be found.
 #'
 #' @return Rewritten expression
 #'
-#' @examples
-#' my_if_else <- function(test, if_true, if_false) {
-#'     if (test) if_true else if_false
-#' }
-#' class(my_if_else) <- c("my_if_else", class(my_if_else))
-#' transform_call.my_if_else <- function(fun, expr) {
-#'     test <- expr[[2]]; if_true <- expr[[3]]; if_false <- expr[[4]]
-#'     rlang::expr(if (rlang::UQ(test)) rlang::UQ(if_true) else rlang::UQ(if_false))
-#' }
-#'
-#' f <- function(x, y) my_if_else(x == y, x, f(y, y))
-#' user_transform(body(f))
-#'
 #' @export
-user_transform <- function(expr, env = rlang::caller_env()) {
+user_transform <- function(expr, fun = expr, env = rlang::caller_env()) {
     if (!rlang::is_expression(expr)) {
         error_msg <- glue::glue(
             "The `expr' argument is not a quoted expression.\n",
@@ -71,5 +64,5 @@ user_transform <- function(expr, env = rlang::caller_env()) {
         )
         stop(simpleError(error_msg))
     }
-    user_transform_rec(expr, env)
+    user_transform_rec(fun, expr, env)
 }

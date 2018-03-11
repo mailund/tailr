@@ -162,8 +162,8 @@ check_function_argument <- function(fun) {
 #' @param env      Environment used to look up variables used in \code{fun_body}.
 #'
 #' @export
-can_loop_transform_body <- function(fun_name, fun_body, env) {
-    fun_body <- user_transform(fun_body, env)
+can_loop_transform_body <- function(fun_name, fun_body, fun, env) {
+    fun_body <- user_transform(fun_body, fun, env)
     callCC(function(cc) can_transform_rec(fun_body, fun_name, TRUE, cc))
 }
 
@@ -174,9 +174,9 @@ can_loop_transform_ <- function(fun) {
 
     fun_name <- rlang::get_expr(fun)
     fun_env <- rlang::get_env(fun)
-    fun_body <- user_transform(body(rlang::eval_tidy(fun)), fun_env)
+    fun <- rlang::eval_tidy(fun)
 
-    can_loop_transform_body(fun_name, fun_body, fun_env)
+    can_loop_transform_body(fun_name, body(fun), fun, fun_env)
 }
 
 
@@ -204,8 +204,7 @@ can_loop_transform_ <- function(fun) {
 #' @describeIn can_loop_transform This version quotes \code{fun} itself.
 #' @export
 can_loop_transform <- function(fun) {
-    fun <- rlang::enquo(fun)
-    can_loop_transform_(fun)
+    can_loop_transform_(rlang::enquo(fun))
 }
 
 ## Function transformation ###################################################
@@ -527,9 +526,9 @@ loop_transform <- function(fun, byte_compile = TRUE) {
     fun <- rlang::eval_tidy(fun)
     fun_name <- rlang::get_expr(fun_q)
     fun_env <- rlang::get_env(fun_q)
-    fun_body <- user_transform(body(fun), fun_env)
+    fun_body <- user_transform(body(fun), fun, fun_env)
 
-    if (!can_loop_transform_body(fun_name, fun_body, fun_env)) {
+    if (!can_loop_transform_body(fun_name, fun_body, fun, fun_env)) {
         warning("Could not build a transformed function")
         return(fun)
     }
