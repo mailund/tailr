@@ -9,3 +9,4 @@
 ^cleanup.R$
 ^experiments.R$
 ^cran-comments\.md$
+^.imdone$
