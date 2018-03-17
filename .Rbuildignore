@@ -10,3 +10,4 @@
 ^experiments.R$
 ^cran-comments\.md$
 ^.imdone$
+^revdep$
