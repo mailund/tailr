@@ -1,4 +1,7 @@
 
+* This is release 0.1.1 that can handle when functions are
+  local variables and thus not found in scope at compile-time.
+
 ## Test environments
 
 * local OS X install, R 3.4.4
@@ -12,5 +15,6 @@
 
 0 errors | 0 warnings | 0 notes
 
-* This is release 0.1.1 that can handle when functions are
-  local variables and thus not found in scope at compile-time.
+## Downstream dependencies
+
+ * pmatch -- checks without issues using this release.
