@@ -1,6 +1,6 @@
 # tailr 0.1.1
 
-* Handles local variables when they are functions.
+* Handles functions when they are local variables.
 
 # tailr 0.1.0
 
