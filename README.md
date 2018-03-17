@@ -9,7 +9,7 @@
 state and is being actively
 developed.](http://www.repostatus.org/badges/latest/active.svg)](http://www.repostatus.org/#active)
 [![Last-changedate](https://img.shields.io/badge/last%20change-2018--03--17-green.svg)](/commits/master)
-[![packageversion](https://img.shields.io/badge/Package%20version-0.1.1-green.svg?style=flat-square)](commits/master)
+[![packageversion](https://img.shields.io/badge/Package%20version-0.1.1.9000-green.svg?style=flat-square)](commits/master)
 
 [![Travis build
 status](https://travis-ci.org/mailund/tailr.svg?branch=master)](https://travis-ci.org/mailund/tailr)
@@ -122,14 +122,14 @@ bm <- microbenchmark::microbenchmark(factorial(n),
                                      tr_factorial(n))
 bm
 #> Unit: microseconds
-#>               expr      min        lq      mean    median        uq
-#>       factorial(n) 1238.332 1574.1585 1864.1002 1676.3815 1833.4360
-#>  loop_factorial(n)   57.964   87.7235  142.9240  101.9705  108.7195
-#>    tr_factorial(n)  181.331  370.4770  408.5664  402.9685  437.2025
-#>       max neval
-#>  7723.191   100
-#>  4388.476   100
-#>  1816.852   100
+#>               expr     min      lq      mean    median        uq      max
+#>       factorial(n) 699.813 856.687 1387.9600 1198.2065 1539.7315 7509.550
+#>  loop_factorial(n)  50.245  54.284  131.3484   61.8165   78.9795 5600.113
+#>    tr_factorial(n) 169.367 196.524  319.8288  235.3775  312.9195 2793.829
+#>  neval
+#>    100
+#>    100
+#>    100
 boxplot(bm)
 ```
 
@@ -240,7 +240,7 @@ tr_llength
 #>         }
 #>     })
 #> }
-#> <bytecode: 0x7fddfe174190>
+#> <bytecode: 0x7fdcd3f09d18>
 ```
 
 but, then, it is not one we want to manually inspect in any case.
@@ -263,13 +263,13 @@ bm <- microbenchmark::microbenchmark(llength(test_llist),
 bm
 #> Unit: milliseconds
 #>                      expr      min       lq     mean   median       uq
-#>       llength(test_llist) 52.15034 62.94309 67.27350 65.32222 68.77446
-#>  loop_llength(test_llist) 54.48512 66.55713 70.13767 70.21095 74.21975
-#>    tr_llength(test_llist) 33.69783 41.62228 44.88733 45.06710 47.30268
+#>       llength(test_llist) 53.73598 67.30172 71.61504 71.59842 74.62157
+#>  loop_llength(test_llist) 57.95161 71.66909 78.34020 76.41509 80.55612
+#>    tr_llength(test_llist) 36.72396 45.79821 48.95977 47.88707 50.92382
 #>        max neval
-#>  118.54083   100
-#>   84.72679   100
-#>   58.92155   100
+#>  117.86029   100
+#>  133.79968   100
+#>   92.11833   100
 boxplot(bm)
 ```
 
