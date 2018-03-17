@@ -6,7 +6,7 @@
 \alias{can_loop_transform}
 \title{Tests if a function, provided by its name, can be transformed.}
 \usage{
-can_loop_transform_body(fun_name, fun_body, env)
+can_loop_transform_body(fun_name, fun_body, fun, env)
 
 can_loop_transform_(fun)
 
@@ -17,9 +17,9 @@ can_loop_transform(fun)
 
 \item{fun_body}{The user-transformed function body.}
 
-\item{env}{Environment used to look up variables used in \code{fun_body}.}
-
 \item{fun}{The function to check. Must be provided by its (bare symbol) name.}
+
+\item{env}{Environment used to look up variables used in \code{fun_body}.}
 }
 \description{
 This function analyses a recursive function to check if we can transform it into

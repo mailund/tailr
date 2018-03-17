@@ -4,10 +4,13 @@
 \alias{loop_transform}
 \title{Transform a function from recursive to looping.}
 \usage{
-loop_transform(fun)
+loop_transform(fun, byte_compile = TRUE)
 }
 \arguments{
 \item{fun}{The function to transform. Must be provided as a bare name.}
+
+\item{byte_compile}{Flag specifying whether to compile the function after
+transformation.}
 }
 \description{
 Since this function needs to handle recursive functions, it needs to know the

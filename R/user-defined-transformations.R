@@ -51,6 +51,7 @@ user_transform_rec <- function(fun, expr, env) {
 #'
 #' @param fun  The actual function to transform.
 #' @param expr The expression to transform -- typically a function body.
+#' @param env  The environment where functions can be found.
 #'
 #' @return Rewritten expression
 #'
