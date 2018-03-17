@@ -540,7 +540,6 @@ loop_transform <- function(fun, byte_compile = TRUE) {
         body = new_fun_body,
         env = rlang::get_env(fun_q)
     )
-
     if (byte_compile) {
         if (!requireNamespace("compiler")) { # nocov start
             msg <- simpleWarning(
@@ -556,6 +555,7 @@ loop_transform <- function(fun, byte_compile = TRUE) {
         } # nocov end
         result <- compiler::cmpfun(result)
     }
+    attr(result, "srcref") <- attr(fun, "srcref")
 
     result
 }
