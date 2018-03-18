@@ -21,5 +21,6 @@ Suggests:
     compiler,
     pmatch (>= 0.1.2)
 RoxygenNote: 6.0.1
+Roxygen: list(markdown = TRUE)
 URL: https://github.com/mailund/tailr
 BugReports: https://github.com/mailund/tailr/issues
