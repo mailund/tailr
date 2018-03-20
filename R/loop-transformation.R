@@ -510,21 +510,36 @@ build_transformed_function <- function(fun_expr, info) {
 }
 
 #FIXME: for testing
-dummy_transform_body <- function(expr) {
-    n <- acc <- NULL # to satisfy check
+dummy_transform_body <- function(fun_expr, info) {
+    vars <- names(formals(info$fun))
+    tmp_assignments <- vector("list", length = length(vars))
+    locals_assignments <- vector("list", length = length(vars))
+    for (i in seq_along(vars)) {
+        local_var <- as.symbol(vars[[i]])
+        tmp_var <- parse(text = paste(".tailr_", vars[[i]], sep = ""))[[1]]
+        tmp_assignments[[i]] <- rlang::expr(rlang::UQ(tmp_var) <- rlang::UQ(local_var))
+        locals_assignments[[i]] <- rlang::expr(rlang::UQ(local_var) <- rlang::UQ(tmp_var))
+    }
+
+    # this would be a nice pipeline, but it is a bit much to require
+    # magrittr just for this
+    fun_expr <- make_returns_explicit(fun_expr, FALSE, info)
+    fun_expr <- simplify_returns(fun_expr, info)
+    fun_expr <- handle_recursive_returns(fun_expr, info)
+    fun_expr <- returns_to_escapes(fun_expr, info)
+    fun_expr <- simplify_nested_blocks(fun_expr)
+
     rlang::expr({
+        #!!! tmp_assignments
         .tailr_n <- n
         .tailr_acc <- acc
         callCC(function(escape) {
             repeat {
-                n <- .tailr_n
-                acc <- .tailr_acc
-                if (n <= 1)
-                    escape(acc)
-                else {
-                    .tailr_n <<- n - 1
-                    .tailr_acc <<- acc * n
-                }
+                #!!! locals_assignments
+                n <<- .tailr_n
+                acc <<- .tailr_acc
+                !! fun_expr
+                next
             }
         })
     })
@@ -548,7 +563,7 @@ loop_transform <- function(fun, byte_compile = TRUE) {
     fun_name <- rlang::get_expr(fun_q)
     fun_env <- rlang::get_env(fun_q)
     fun_body <- user_transform(body(fun), fun, fun_env)
-    fun_body <- dummy_transform_body(body(fun))
+
 
     if (!can_loop_transform_body(fun_name, fun_body, fun, fun_env)) {
         warning("Could not build a transformed function")
@@ -556,7 +571,8 @@ loop_transform <- function(fun, byte_compile = TRUE) {
     }
     info <- list(fun = fun, fun_name = fun_name)
 
-    new_fun_body <- build_transformed_function(fun_body, info)
+    #new_fun_body <- build_transformed_function(fun_body, info)
+    new_fun_body <- dummy_transform_body(body(fun), info)
     result <- rlang::new_function(
         args = formals(fun),
         body = new_fun_body,
