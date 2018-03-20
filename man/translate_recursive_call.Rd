@@ -3,7 +3,7 @@
 \name{translate_recursive_call}
 \alias{translate_recursive_call}
 \title{Translate a return(<recursive-function-call>) expressions into
-a block that assigns the parameters to local variables and call `next`.}
+a block that assigns the parameters to local variables and call \code{next}.}
 \usage{
 translate_recursive_call(recursive_call, info)
 }
@@ -17,5 +17,5 @@ The rewritten expression
 }
 \description{
 Translate a return(<recursive-function-call>) expressions into
-a block that assigns the parameters to local variables and call `next`.
+a block that assigns the parameters to local variables and call \code{next}.
 }

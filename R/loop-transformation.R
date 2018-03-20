@@ -498,67 +498,19 @@ build_transformed_function <- function(fun_expr, info) {
     fun_expr <- returns_to_escapes(fun_expr, info)
     fun_expr <- simplify_nested_blocks(fun_expr)
 
-    rlang::expr({
-        !!! tmp_assignments
+    repeat_body <- as.call(
+        c(`{`, locals_assignments, fun_expr, quote(next))
+    )
+    call_cc_stmt <- rlang::expr(
         callCC(function(escape) {
             repeat {
-                !!! locals_assignments
-                !! fun_expr
+                !!repeat_body
             }
         })
-    })
-}
-
-#FIXME: for testing
-dummy_transform_body <- function(fun_expr, info) {
-    vars <- names(formals(info$fun))
-    tmp_assignments <- vector("list", length = length(vars))
-    locals_assignments <- vector("list", length = length(vars))
-    for (i in seq_along(vars)) {
-        local_var <- as.symbol(vars[[i]])
-        tmp_var <- parse(text = paste(".tailr_", vars[[i]], sep = ""))[[1]]
-        tmp_assignments[[i]] <- rlang::expr(rlang::UQ(tmp_var) <- rlang::UQ(local_var))
-        locals_assignments[[i]] <- rlang::expr(rlang::UQ(local_var) <- rlang::UQ(tmp_var))
-    }
-
-    # this would be a nice pipeline, but it is a bit much to require
-    # magrittr just for this
-    fun_expr <- make_returns_explicit(fun_expr, FALSE, info)
-    fun_expr <- simplify_returns(fun_expr, info)
-    fun_expr <- handle_recursive_returns(fun_expr, info)
-    fun_expr <- returns_to_escapes(fun_expr, info)
-    fun_expr <- simplify_nested_blocks(fun_expr)
-
-    tmp_assignments_cmd <- rlang::expr({
-        !!!tmp_assignments
-    })
-    locals_assignments_cmd <- rlang::expr({
-        !!!locals_assignments
-    })
-    rlang::expr({
-        #!!! tmp_assignments
-        !! tmp_assignments_cmd
-        callCC(function(escape) {
-            repeat {
-                #!!! locals_assignments
-                !! locals_assignments_cmd
-                !! fun_expr
-                next
-            }
-        })
-    })
-
-    fun_expr <- rlang::expr({
-        !! tmp_assignments_cmd
-        callCC(function(escape) {
-            repeat {
-                !! locals_assignments_cmd
-                !! fun_expr
-                next
-            }
-        })
-    })
-    fun_expr <- simplify_nested_blocks(fun_expr)
+    )
+    as.call(
+        c(`{`, tmp_assignments, call_cc_stmt)
+    )
 }
 
 #' Transform a function from recursive to looping.
@@ -587,8 +539,7 @@ loop_transform <- function(fun, byte_compile = TRUE) {
     }
     info <- list(fun = fun, fun_name = fun_name)
 
-    #new_fun_body <- build_transformed_function(fun_body, info)
-    new_fun_body <- dummy_transform_body(body(fun), info)
+    new_fun_body <- build_transformed_function(fun_body, info)
     result <- rlang::new_function(
         args = formals(fun),
         body = new_fun_body,
@@ -609,7 +560,7 @@ loop_transform <- function(fun, byte_compile = TRUE) {
         } # nocov end
         result <- compiler::cmpfun(result)
     }
-    #attr(result, "srcref") <- attr(fun, "srcref")
+    attr(result, "srcref") <- attr(fun, "srcref")
 
     result
 }
