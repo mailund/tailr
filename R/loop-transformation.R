@@ -509,6 +509,27 @@ build_transformed_function <- function(fun_expr, info) {
     })
 }
 
+#FIXME: for testing
+dummy_transform_body <- function(expr) {
+    n <- acc <- NULL # to satisfy check
+    rlang::expr({
+        .tailr_n <- n
+        .tailr_acc <- acc
+        callCC(function(escape) {
+            repeat {
+                n <- .tailr_n
+                acc <- .tailr_acc
+                if (n <= 1)
+                    escape(acc)
+                else {
+                    .tailr_n <<- n - 1
+                    .tailr_acc <<- acc * n
+                }
+            }
+        })
+    })
+}
+
 #' Transform a function from recursive to looping.
 #'
 #' Since this function needs to handle recursive functions, it needs to know the
@@ -527,6 +548,7 @@ loop_transform <- function(fun, byte_compile = TRUE) {
     fun_name <- rlang::get_expr(fun_q)
     fun_env <- rlang::get_env(fun_q)
     fun_body <- user_transform(body(fun), fun, fun_env)
+    fun_body <- dummy_transform_body(body(fun))
 
     if (!can_loop_transform_body(fun_name, fun_body, fun, fun_env)) {
         warning("Could not build a transformed function")
