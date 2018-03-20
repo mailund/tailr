@@ -529,20 +529,36 @@ dummy_transform_body <- function(fun_expr, info) {
     fun_expr <- returns_to_escapes(fun_expr, info)
     fun_expr <- simplify_nested_blocks(fun_expr)
 
+    tmp_assignments_cmd <- rlang::expr({
+        !!!tmp_assignments
+    })
+    locals_assignments_cmd <- rlang::expr({
+        !!!locals_assignments
+    })
     rlang::expr({
         #!!! tmp_assignments
-        .tailr_n <- n
-        .tailr_acc <- acc
+        !! tmp_assignments_cmd
         callCC(function(escape) {
             repeat {
                 #!!! locals_assignments
-                n <<- .tailr_n
-                acc <<- .tailr_acc
+                !! locals_assignments_cmd
                 !! fun_expr
                 next
             }
         })
     })
+
+    fun_expr <- rlang::expr({
+        !! tmp_assignments_cmd
+        callCC(function(escape) {
+            repeat {
+                !! locals_assignments_cmd
+                !! fun_expr
+                next
+            }
+        })
+    })
+    fun_expr <- simplify_nested_blocks(fun_expr)
 }
 
 #' Transform a function from recursive to looping.
@@ -593,7 +609,7 @@ loop_transform <- function(fun, byte_compile = TRUE) {
         } # nocov end
         result <- compiler::cmpfun(result)
     }
-    attr(result, "srcref") <- attr(fun, "srcref")
+    #attr(result, "srcref") <- attr(fun, "srcref")
 
     result
 }
