@@ -1,0 +1,36 @@
+template:
+    params:
+        bootswatch: cosmo
+
+navbar:
+  title: "tailr"
+
+  left:
+    - icon: fa-home
+      href: index.html
+    - text: "Functions"
+      href: reference/index.html
+    - text: "Changelog"
+      href: news/index.html
+
+  right:
+   - icon: fa-twitter
+     href: https://twitter.com/ThomasMailund
+   - icon: fa-github
+     href: https://github.com/mailund/tailr
+
+reference:
+    - title: Transformation
+      desc: >
+        Functions for transforming recursive functions into loops
+      contents:
+        - loop_transform
+        - can_loop_transform
+        - can_loop_transform_
+        - can_loop_transform_body
+
+    - title: User-defined transformations
+      desc: >
+        Functions for customising transformations.
+      contents:
+        - user_transform
