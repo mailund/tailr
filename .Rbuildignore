@@ -11,3 +11,5 @@
 ^cran-comments\.md$
 ^.imdone$
 ^revdep$
+^docs$
+^_pkgdown.yml$
