@@ -30,7 +30,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="index.html">tailr</a>
-        <span class="label label-default" data-toggle="tooltip" data-placement="bottom" title="Released package">0.1.1.9002</span>
+        <span class="label label-default" data-toggle="tooltip" data-placement="bottom" title="Released package">0.1.2.9000</span>
       </span>
     </div>
 
@@ -82,7 +82,6 @@
 <div class="page-header"><h1 class="hasAnchor">
 <a href="#tailr-tail-recursion-optimisations-for-r-programming" class="anchor"></a>tailr – Tail recursion optimisations for R programming</h1></div>
 
-<hr>
 <p>Recursive functions are the natural way to express iterations in a functional programming langauge, but in R, they can be significantly slower than loop-versions and for moderately long sequences or moderately deep trees, recursive functions will reach a limit imposted on them by the stack limit.</p>
 <p>There are known solutions to these problems, as long as functions are written to be tail-recursive, meaning that the return value of a function is either a base value or another recursive call, but where we do not call recursively to then do something with the result.</p>
 <p>The goal of <code>tailr</code> is to automatically transform tail-recursive functions into loops or trampolines.</p>
@@ -131,10 +130,10 @@
 <a class="sourceLine" id="cb5-14" data-line-number="14">                                     <span class="kw">tr_factorial</span>(n))</a>
 <a class="sourceLine" id="cb5-15" data-line-number="15">bm</a>
 <a class="sourceLine" id="cb5-16" data-line-number="16"><span class="co">#&gt; Unit: microseconds</span></a>
-<a class="sourceLine" id="cb5-17" data-line-number="17"><span class="co">#&gt;               expr     min       lq      mean   median       uq      max</span></a>
-<a class="sourceLine" id="cb5-18" data-line-number="18"><span class="co">#&gt;       factorial(n) 705.661 734.1925 888.89196 762.9200 863.3195 5120.883</span></a>
-<a class="sourceLine" id="cb5-19" data-line-number="19"><span class="co">#&gt;  loop_factorial(n)  56.239  57.4215  83.69814  58.3215  58.9835 2201.999</span></a>
-<a class="sourceLine" id="cb5-20" data-line-number="20"><span class="co">#&gt;    tr_factorial(n) 706.612 727.2185 809.20835 747.1420 797.3300 2209.876</span></a>
+<a class="sourceLine" id="cb5-17" data-line-number="17"><span class="co">#&gt;               expr     min       lq       mean   median       uq      max</span></a>
+<a class="sourceLine" id="cb5-18" data-line-number="18"><span class="co">#&gt;       factorial(n) 729.025 847.2085 1117.21646 996.0535 1203.120 6873.311</span></a>
+<a class="sourceLine" id="cb5-19" data-line-number="19"><span class="co">#&gt;  loop_factorial(n)  56.282  58.6220   89.87922  60.2395   63.538 2662.805</span></a>
+<a class="sourceLine" id="cb5-20" data-line-number="20"><span class="co">#&gt;    tr_factorial(n) 722.090 771.2465  928.12864 827.4775 1021.528 3153.916</span></a>
 <a class="sourceLine" id="cb5-21" data-line-number="21"><span class="co">#&gt;  neval</span></a>
 <a class="sourceLine" id="cb5-22" data-line-number="22"><span class="co">#&gt;    100</span></a>
 <a class="sourceLine" id="cb5-23" data-line-number="23"><span class="co">#&gt;    100</span></a>
@@ -188,7 +187,7 @@
 <a class="sourceLine" id="cb11-4" data-line-number="4"><span class="co">#&gt;           NIL -&gt; acc,</span></a>
 <a class="sourceLine" id="cb11-5" data-line-number="5"><span class="co">#&gt;           CONS(car, cdr) -&gt; llength(cdr, acc + 1))</span></a>
 <a class="sourceLine" id="cb11-6" data-line-number="6"><span class="co">#&gt; }</span></a>
-<a class="sourceLine" id="cb11-7" data-line-number="7"><span class="co">#&gt; &lt;bytecode: 0x7fd1d99180b0&gt;</span></a></code></pre></div>
+<a class="sourceLine" id="cb11-7" data-line-number="7"><span class="co">#&gt; &lt;bytecode: 0x7fa2f8028740&gt;</span></a></code></pre></div>
 <p>but, then, it is not one we want to manually inspect in any case.</p>
 <p>The automatically generated function is complicated, but it actually outcompetes the hand-written loop version.</p>
 <div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb12-1" data-line-number="1">make_llist &lt;-<span class="st"> </span><span class="cf">function</span>(n) {</a>
@@ -205,13 +204,13 @@
 <a class="sourceLine" id="cb12-12" data-line-number="12">bm</a>
 <a class="sourceLine" id="cb12-13" data-line-number="13"><span class="co">#&gt; Unit: milliseconds</span></a>
 <a class="sourceLine" id="cb12-14" data-line-number="14"><span class="co">#&gt;                      expr      min       lq     mean   median       uq</span></a>
-<a class="sourceLine" id="cb12-15" data-line-number="15"><span class="co">#&gt;       llength(test_llist) 52.34161 56.25923 60.35212 60.01097 63.49811</span></a>
-<a class="sourceLine" id="cb12-16" data-line-number="16"><span class="co">#&gt;  loop_llength(test_llist) 55.82252 58.51989 61.98243 61.40192 64.60558</span></a>
-<a class="sourceLine" id="cb12-17" data-line-number="17"><span class="co">#&gt;    tr_llength(test_llist) 36.70087 38.58082 41.47196 41.26752 43.45738</span></a>
-<a class="sourceLine" id="cb12-18" data-line-number="18"><span class="co">#&gt;       max neval</span></a>
-<a class="sourceLine" id="cb12-19" data-line-number="19"><span class="co">#&gt;  94.15608   100</span></a>
-<a class="sourceLine" id="cb12-20" data-line-number="20"><span class="co">#&gt;  73.45966   100</span></a>
-<a class="sourceLine" id="cb12-21" data-line-number="21"><span class="co">#&gt;  74.69391   100</span></a>
+<a class="sourceLine" id="cb12-15" data-line-number="15"><span class="co">#&gt;       llength(test_llist) 56.07179 59.44156 64.32394 61.27681 64.38318</span></a>
+<a class="sourceLine" id="cb12-16" data-line-number="16"><span class="co">#&gt;  loop_llength(test_llist) 58.98844 62.91033 67.65086 64.55698 68.94217</span></a>
+<a class="sourceLine" id="cb12-17" data-line-number="17"><span class="co">#&gt;    tr_llength(test_llist) 39.97359 41.06288 44.73603 42.93393 45.02601</span></a>
+<a class="sourceLine" id="cb12-18" data-line-number="18"><span class="co">#&gt;        max neval</span></a>
+<a class="sourceLine" id="cb12-19" data-line-number="19"><span class="co">#&gt;  108.95810   100</span></a>
+<a class="sourceLine" id="cb12-20" data-line-number="20"><span class="co">#&gt;  113.32328   100</span></a>
+<a class="sourceLine" id="cb12-21" data-line-number="21"><span class="co">#&gt;   88.02851   100</span></a>
 <a class="sourceLine" id="cb12-22" data-line-number="22"><span class="kw">boxplot</span>(bm)</a></code></pre></div>
 <p><img src="reference/figures/README-unnamed-chunk-9-1.png" width="100%"></p>
 <p>It is, of course, possible to write a faster hand-written function to deal with this case, but it will be about as complicated as the automatically generated function, and you don’t really want to write that by hand.</p>
@@ -264,7 +263,7 @@
 <li><a href="https://www.tidyverse.org/lifecycle/#maturing"><img src="https://img.shields.io/badge/lifecycle-maturing-blue.svg" alt="lifecycle"></a></li>
 <li><a href="http://www.repostatus.org/#active"><img src="http://www.repostatus.org/badges/latest/active.svg" alt="Project Status: Active – The project has reached a stable, usable state and is being actively developed."></a></li>
 <li><a href="/commits/master"><img src="https://img.shields.io/badge/last%20change-2018--04--27-green.svg" alt="Last-changedate"></a></li>
-<li><a href="commits/master"><img src="https://img.shields.io/badge/Package%20version-0.1.1.9002-green.svg?style=flat-square" alt="packageversion"></a></li>
+<li><a href="commits/master"><img src="https://img.shields.io/badge/Package%20version-0.1.2.9000-green.svg?style=flat-square" alt="packageversion"></a></li>
 <li><a href="https://travis-ci.org/mailund/tailr"><img src="https://travis-ci.org/mailund/tailr.svg?branch=master" alt="Travis build status"></a></li>
 <li><a href="https://ci.appveyor.com/project/mailund/tailr/branch/master"><img src="https://ci.appveyor.com/api/projects/status/1d36yh8klursko82/branch/master?svg=true" alt="Appveyor build status"></a></li>
 <li><a href="https://codecov.io/github/mailund/tailr?branch=master"><img src="https://codecov.io/gh/mailund/tailr/branch/master/graph/badge.svg" alt="Coverage status"></a></li>

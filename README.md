@@ -8,9 +8,8 @@
 [![Project Status: Active – The project has reached a stable, usable
 state and is being actively
 developed.](http://www.repostatus.org/badges/latest/active.svg)](http://www.repostatus.org/#active)
-[![Last-changedate](https://img.shields.io/badge/last%20change-2018--03--20-green.svg)](/commits/master)
-[![packageversion](https://img.shields.io/badge/Package%20version-0.1.1.9002-green.svg?style=flat-square)](commits/master)
-
+[![Last-changedate](https://img.shields.io/badge/last%20change-2018--04--27-green.svg)](/commits/master)
+[![packageversion](https://img.shields.io/badge/Package%20version-0.1.2.9000-green.svg?style=flat-square)](commits/master)
 [![Travis build
 status](https://travis-ci.org/mailund/tailr.svg?branch=master)](https://travis-ci.org/mailund/tailr)
 [![Appveyor build
@@ -19,15 +18,12 @@ status](https://ci.appveyor.com/api/projects/status/1d36yh8klursko82/branch/mast
 status](https://codecov.io/gh/mailund/tailr/branch/master/graph/badge.svg)](https://codecov.io/github/mailund/tailr?branch=master)
 [![Coverage
 status](http://coveralls.io/repos/github/mailund/tailr/badge.svg?branch=master)](https://coveralls.io/github/mailund/tailr?branch=master)
-
 [![CRAN
 status](http://www.r-pkg.org/badges/version/tailr)](https://cran.r-project.org/package=tailr)
 [![CRAN
 downloads](http://cranlogs.r-pkg.org/badges/grand-total/tailr)](https://cran.r-project.org/package=tailr)
 [![minimal R
 version](https://img.shields.io/badge/R-%E2%89%A53.2-blue.svg)](https://cran.r-project.org/)
-
------
 
 Recursive functions are the natural way to express iterations in a
 functional programming langauge, but in R, they can be significantly
@@ -109,14 +105,14 @@ bm <- microbenchmark::microbenchmark(factorial(n),
                                      tr_factorial(n))
 bm
 #> Unit: microseconds
-#>               expr     min       lq      mean   median       uq      max
-#>       factorial(n) 715.304 772.4265 1035.9802 863.2585 1179.665 6816.073
-#>  loop_factorial(n)  51.310  51.8860   96.7987  53.6600   60.598 3491.843
-#>    tr_factorial(n) 791.451 821.8215 1100.5864 907.5140 1166.180 2606.855
-#>  neval
-#>    100
-#>    100
-#>    100
+#>               expr     min       lq       mean    median        uq
+#>       factorial(n) 814.266 929.6035 1181.85084 1031.0895 1166.4930
+#>  loop_factorial(n)  55.699  57.9475   92.05992   59.2350   61.3105
+#>    tr_factorial(n) 739.889 778.1470  869.85476  824.8865  977.5195
+#>       max neval
+#>  5161.836   100
+#>  2335.202   100
+#>  1510.211   100
 boxplot(bm)
 ```
 
@@ -212,7 +208,7 @@ tr_llength
 #>           NIL -> acc,
 #>           CONS(car, cdr) -> llength(cdr, acc + 1))
 #> }
-#> <bytecode: 0x7fac8a3e9238>
+#> <bytecode: 0x7fee24397b60>
 ```
 
 but, then, it is not one we want to manually inspect in any case.
@@ -235,13 +231,13 @@ bm <- microbenchmark::microbenchmark(llength(test_llist),
 bm
 #> Unit: milliseconds
 #>                      expr      min       lq     mean   median       uq
-#>       llength(test_llist) 54.94337 65.40173 68.42609 67.61124 71.20118
-#>  loop_llength(test_llist) 59.18011 70.31971 75.76034 74.02095 78.67105
-#>    tr_llength(test_llist) 35.13879 43.11308 45.63485 45.09175 48.55855
+#>       llength(test_llist) 55.21795 58.08244 63.33243 60.60593 63.92709
+#>  loop_llength(test_llist) 59.17127 61.42575 66.34349 63.89574 67.29537
+#>    tr_llength(test_llist) 38.83469 40.59146 43.65161 42.20594 44.31466
 #>        max neval
-#>   99.00812   100
-#>  134.51344   100
-#>   60.88526   100
+#>  122.21163   100
+#>  109.06998   100
+#>   75.36689   100
 boxplot(bm)
 ```
 
