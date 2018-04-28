@@ -99,7 +99,7 @@ check_can_call_be_transformed <- function(call_name, call_arguments,
             return(FALSE) # inside calls we do not allow recursive calls
         }
     )
-    stop("we shouldn't reach this point!")
+    stop("we shouldn't reach this point!") # nocov
 }
 
 
@@ -289,54 +289,24 @@ returns_to_escapes <- function(fn) {
     )
 }
 
-## Simplify nested code-blocks #############
-simplify_nested_blocks <- function(fn) {
-    simplify_callback <- function(expr, ...) {
-       if (rlang::is_lang(expr[[2]]) && rlang::call_name(expr[[2]]) == "{")
-            expr[[2]]
-        else
-            expr
-    }
-    fn %>% rewrite_with(
-        rewrite_callbacks() %>% add_call_callback(`{`, simplify_callback)
-    )
-}
-
 #' Construct the expression for a transformed function body.
 #'
 #' This is where the loop-transformation is done. This function translates
 #' the body of a recursive function into a looping function.
 #'
 #' @param fun The original function
-#' @param info Information passed along the transformations.
+#' @param fun_name The name of the function we are transforming
 #' @return The body of the transformed function.
-build_transformed_function <- function(fun, info) {
+build_transformed_function <- function(fun, fun_name) {
 
-    # this would be a nice pipeline, but it is a bit much to require
-    # magrittr just for this
     fun <- fun %>%
         make_returns_explicit() %>%
         simplify_returns() %>%
-        handle_recursive_returns(info$fun_name) %>% # fixme: use of info
-        returns_to_escapes() #%>%
-        #simplify_nested_blocks()
-
-    fun_expr <- body(fun)
-
-    #cat("\n=============================\n")
-    #print(fun_expr)
-    #cat("\n-----------------------------\n")
-    #print(fun_expr_2)
-    #cat("\n-----------------------------\n")
-    #print(fun_expr == fun_expr_2)
-    #stopifnot(fun_expr == fun_expr_2)
-    #cat("\n=============================\n")
-
-
-    #fun_expr <- simplify_nested_blocks(fun_expr)
+        handle_recursive_returns(fun_name) %>%
+        returns_to_escapes()
 
     # wrap everything in a new body...
-    vars <- names(formals(info$fun))
+    vars <- names(formals(fun))
     tmp_assignments <- vector("list", length = length(vars))
     locals_assignments <- vector("list", length = length(vars))
     for (i in seq_along(vars)) {
@@ -347,7 +317,7 @@ build_transformed_function <- function(fun, info) {
     }
 
     repeat_body <- as.call(
-        c(`{`, locals_assignments, fun_expr, quote(next))
+        c(`{`, locals_assignments, body(fun), quote(next))
     )
     call_cc_stmt <- rlang::expr(
         callCC(function(escape) {
@@ -369,9 +339,13 @@ build_transformed_function <- function(fun, info) {
 #' @param fun          The function to transform. Must be provided as a bare name.
 #' @param byte_compile Flag specifying whether to compile the function after
 #'                     transformation.
+#' @param set_srcref   Flag specifying whether the "srcref" attribute should be
+#'                     set to the original value. If you do this, you can print
+#'                     the modified function and it will look like the original,
+#'                     but printing it will not show the actual, tranformed, source.
 #'
 #' @export
-loop_transform <- function(fun, byte_compile = TRUE) {
+loop_transform <- function(fun, byte_compile = TRUE, set_srcref = TRUE) {
     fun_q <- rlang::enquo(fun)
     check_function_argument(fun_q)
 
@@ -382,11 +356,7 @@ loop_transform <- function(fun, byte_compile = TRUE) {
         return(fun)
     }
 
-    fun_name <- rlang::get_expr(fun_q)
-    fun_env <- rlang::get_env(fun_q)
-    info <- list(fun = fun, fun_name = fun_name)
-
-    new_fun_body <- build_transformed_function(fn, info)
+    new_fun_body <- build_transformed_function(fn, rlang::get_expr(fun_q))
     result <- rlang::new_function(
         args = formals(fun),
         body = new_fun_body,
@@ -407,7 +377,9 @@ loop_transform <- function(fun, byte_compile = TRUE) {
         } # nocov end
         result <- compiler::cmpfun(result)
     }
-    attr(result, "srcref") <- attr(fun, "srcref")
+    if (set_srcref) {
+        attr(result, "srcref") <- attr(fun, "srcref")
+    }
 
     result
 }

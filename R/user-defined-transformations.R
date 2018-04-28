@@ -8,13 +8,13 @@ apply_user_transform <- function(expr, params, env, ...) {
     # with length 1.
     if (length(call_name) == 1) {
         if (call_name %in% names(params)) return(expr) # function is a parameter
-        if (call_name %in% attr(expr, "bound")) return(expr) # local function
+        if (call_name %in% attr(expr, "bound")) return(expr) # nocov
     }
 
     # now try to get the actual function by evaluating it
     err_fun <- function(e) NULL
     fun <- tryCatch(eval(expr[[1]], env), error = err_fun)
-    if (is.null(fun)) return(expr) # don't know the function right now... (why?)
+    if (is.null(fun)) return(expr) # nocov
 
     transformer <- attr(fun, "tailr_transform")
     if (!rlang::is_null(transformer)) transformer(expr) else expr
