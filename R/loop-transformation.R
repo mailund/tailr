@@ -238,52 +238,16 @@ make_returns_explicit <- function(fn) {
     fn
 }
 
-
-#' Removes return(return(...)) cases.
-#'
-#' This function dispatches on a call object to set the context of recursive
-#' expression modifications.
-#'
-#' @param call_expr The call to modify.
-#' @param info  Information passed along with transformations.
-#' @return A modified expression.
-simplify_returns_call <- function(call_expr, info) {
-    call_name <- rlang::call_name(call_expr)
-    call_args <- rlang::call_args(call_expr)
-
-    switch(call_name,
-        # Handle returns
-        "return" = {
-            call_expr[[2]] <- simplify_returns(call_args[[1]], info)
-            if (rlang::is_lang(call_expr[[2]]) && rlang::call_name(call_expr[[2]]) == "return") {
-                call_expr <- call_expr[[2]]
-            }
-        },
-
-        # For all other calls we transform the arguments inside a call context.
-        {
-            for (i in seq_along(call_args)) {
-                call_expr[[i + 1]] <- simplify_returns(call_args[[i]], info)
-            }
-        }
-    )
-
-    call_expr
-}
-
-#' Remove return(return(...)) expressions
-#'
-#' @param expr An expression to transform
-#' @param info Information passed along the transformations.
-#' @return A modified expression.
-simplify_returns <- function(expr, info) {
-    if (rlang::is_atomic(expr) || rlang::is_pairlist(expr) ||
-        rlang::is_symbol(expr) || rlang::is_primitive(expr)) {
-        expr
-    } else {
-        stopifnot(rlang::is_lang(expr))
-        simplify_returns_call(expr, info)
+simplify_returns <- function(fn) {
+    simplify_callback <- function(expr, ...) {
+        if (rlang::is_lang(expr[[2]]) && rlang::call_name(expr[[2]]) == "return")
+            expr[[2]]
+        else
+            expr
     }
+    fn %>% rewrite_with(
+        rewrite_callbacks() %>% add_call_callback(`return`, simplify_callback)
+    )
 }
 
 #' Translate a return(<recursive-function-call>) expressions into
@@ -435,9 +399,12 @@ build_transformed_function <- function(fun, info) {
 
     # this would be a nice pipeline, but it is a bit much to require
     # magrittr just for this
-    fun %>% make_returns_explicit() %>% body -> fun_expr
+    fun <- fun %>%
+        make_returns_explicit() %>%
+        simplify_returns()
 
-    fun_expr <- simplify_returns(fun_expr, info)
+    fun_expr <- body(fun)
+
     fun_expr <- handle_recursive_returns(fun_expr, info)
     fun_expr <- returns_to_escapes(fun_expr, info)
     fun_expr <- simplify_nested_blocks(fun_expr)
