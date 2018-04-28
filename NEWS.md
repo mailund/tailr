@@ -1,3 +1,7 @@
+# tailr 0.1.2.9000
+
+* Rewrote transformations to use the foolbox framework.
+
 # tailr 0.1.2
 
 * The transformation function do no longer use !!! and this seems

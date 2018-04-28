@@ -13,7 +13,8 @@ Depends:
     R (>= 3.2)
 Imports:
     rlang (>= 0.2.0),
-    glue
+    glue,
+    foolbox
 Suggests: 
     covr,
     testthat,

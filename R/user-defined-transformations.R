@@ -1,69 +1,36 @@
 
-#' Apply user transformations depths-first.
-#'
-#' The difference between this function and \code{\link{user_transform}} is that the this
-#' function does not perform type checks before calling recursively while \code{\link{user_transform}}
-#' does.
-#'
-#' @param fun  The actual function to transform.
-#' @param expr The expression to transform -- typically a function body.
-#' @param env  The environment where functions can be found.
-#'
-#' @return Rewritten expression
-user_transform_rec <- function(fun, expr, env) {
-    if (rlang::is_atomic(expr) || rlang::is_pairlist(expr) ||
-        rlang::is_symbol(expr) || rlang::is_primitive(expr)) {
-        expr
-    } else {
-        stopifnot(rlang::is_lang(expr))
-        stopifnot(is.function(fun))
+apply_user_transform <- function(expr, params, env, ...) {
+    call_name <- as.character(expr[[1]])
 
-        # see if we can figure out which function we are dealing with...
-        call_fun <- tryCatch(rlang::call_fn(expr), error = function(e) NULL)
-        if (is.null(call_fun)) {
-            fun_name <- rlang::call_name(expr)
-            if (fun_name %in% names(formals(fun))) {
-                # the function isn't known until runtime, so we can't do anything here
-                call_fun <- NULL
-            } else if (exists(fun_name, env)) {
-                call_fun <- get(fun_name, envir = env)
-            } else {
-                error_msg <- glue::glue(
-                    "The function {fun_name} was not found in the provided scope."
-                )
-                stop(simpleError(error_msg, call = expr))
-            }
-        }
-
-        args <- rlang::call_args(expr)
-        for (i in seq_along(args)) {
-            expr[[i + 1]] <- user_transform(args[[i]], fun, env)
-        }
-        if (!is.null(call_fun) &&
-            !rlang::is_null(transformer <- attr(call_fun, "tailr_transform"))) {
-            expr <- transformer(expr)
-        }
-        expr
+    # Check if we are looking at a local function.
+    # as.character will return a vector for qualified names. Those,
+    # we simply do not consider local. So we only check for those
+    # with length 1.
+    if (length(call_name) == 1) {
+        if (call_name %in% names(params)) return(expr) # function is a parameter
+        if (call_name %in% attr(expr, "bound")) return(expr) # nocov
     }
+
+    # now try to get the actual function by evaluating it
+    err_fun <- function(e) NULL
+    fun <- tryCatch(eval(expr[[1]], env), error = err_fun)
+    if (is.null(fun)) return(expr) # nocov
+
+    transformer <- attr(fun, "tailr_transform")
+    if (!rlang::is_null(transformer)) transformer(expr) else expr
 }
 
+
 #' Apply user transformations depths-first.
 #'
-#' @param fun  The actual function to transform.
-#' @param expr The expression to transform -- typically a function body.
-#' @param env  The environment where functions can be found.
-#'
+#' @param fn The actual function to transform.
 #' @return Rewritten expression
 #'
 #' @export
-user_transform <- function(expr, fun = expr, env = rlang::caller_env()) {
-    if (!rlang::is_expression(expr)) {
-        error_msg <- glue::glue(
-            "The `expr' argument is not a quoted expression.\n",
-            "We expect to get an expression to transform, usually the body of a function.\n",
-            "Did you by any chance pass the function as argument instead of its body?\n"
+user_transform <- function(fn) {
+    fn %>% foolbox::rewrite() %>%
+        foolbox::rewrite_with(
+            foolbox::rewrite_callbacks() %>%
+                foolbox::with_call_callback(apply_user_transform)
         )
-        stop(simpleError(error_msg))
-    }
-    user_transform_rec(fun, expr, env)
 }

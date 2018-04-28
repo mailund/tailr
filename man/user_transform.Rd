@@ -4,14 +4,10 @@
 \alias{user_transform}
 \title{Apply user transformations depths-first.}
 \usage{
-user_transform(expr, fun = expr, env = rlang::caller_env())
+user_transform(fn)
 }
 \arguments{
-\item{expr}{The expression to transform -- typically a function body.}
-
-\item{fun}{The actual function to transform.}
-
-\item{env}{The environment where functions can be found.}
+\item{fn}{The actual function to transform.}
 }
 \value{
 Rewritten expression
