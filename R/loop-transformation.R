@@ -271,52 +271,18 @@ translate_recursive_call <- function(recursive_call, info) {
     ))
 }
 
-#' Handles the actual recursive returns
-#'
-#' This function dispatches on a call object to set the context of recursive
-#' expression modifications.
-#'
-#' @param call_expr The call to modify.
-#' @param info  Information passed along with transformations.
-#' @return A modified expression.
-handle_recursive_returns_call <- function(call_expr, info) {
-    call_name <- rlang::call_name(call_expr)
-    call_args <- rlang::call_args(call_expr)
-
-    switch(call_name,
-        # Handle returns
-        "return" = {
-            call_expr[[2]] <- handle_recursive_returns(call_args[[1]], info)
-            if (rlang::is_lang(call_expr[[2]]) && rlang::call_name(call_expr[[2]]) == info$fun_name) {
-                call_expr <- translate_recursive_call(call_expr[[2]], info)
-            }
-        },
-
-        # For all other calls we just recurse
-        {
-            for (i in seq_along(call_args)) {
-                call_expr[[i + 1]] <- handle_recursive_returns(call_args[[i]], info)
-            }
-        }
-    )
-
-    call_expr
-}
-
-#' Handle the actual recursive calls
-#'
-#' @param expr An expression to transform
-#' @param info Information passed along the transformations.
-#' @return A modified expression.
-handle_recursive_returns <- function(expr, info) {
-    if (rlang::is_atomic(expr) || rlang::is_pairlist(expr) ||
-        rlang::is_symbol(expr) || rlang::is_primitive(expr)) {
-        expr
-    } else {
-        stopifnot(rlang::is_lang(expr))
-        handle_recursive_returns_call(expr, info)
+handle_recursive_returns <- function(fn, fun_name) {
+    return_callback <- function(expr, ...) {
+        if (rlang::is_lang(expr[[2]]) && rlang::call_name(expr[[2]]) == fun_name)
+            translate_recursive_call(expr[[2]], list(fun = fn))
+        else
+            expr
     }
+    fn %>% rewrite_with(
+        rewrite_callbacks() %>% add_call_callback(`return`, return_callback)
+    )
 }
+
 
 #' Make calls to return into calls to escapes.
 #'
@@ -401,11 +367,21 @@ build_transformed_function <- function(fun, info) {
     # magrittr just for this
     fun <- fun %>%
         make_returns_explicit() %>%
-        simplify_returns()
+        simplify_returns() %>%
+        handle_recursive_returns(info$fun_name) # fixme: use of info
 
     fun_expr <- body(fun)
 
-    fun_expr <- handle_recursive_returns(fun_expr, info)
+    #cat("\n=============================\n")
+    #print(fun_expr)
+    #cat("\n-----------------------------\n")
+    #print(fun_expr_2)
+    #cat("\n-----------------------------\n")
+    #print(fun_expr == fun_expr_2)
+    #stopifnot(fun_expr == fun_expr_2)
+    #cat("\n=============================\n")
+
+
     fun_expr <- returns_to_escapes(fun_expr, info)
     fun_expr <- simplify_nested_blocks(fun_expr)
 
