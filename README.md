@@ -8,7 +8,7 @@
 [![Project Status: Active – The project has reached a stable, usable
 state and is being actively
 developed.](http://www.repostatus.org/badges/latest/active.svg)](http://www.repostatus.org/#active)
-[![Last-changedate](https://img.shields.io/badge/last%20change-2018--04--27-green.svg)](/commits/master)
+[![Last-changedate](https://img.shields.io/badge/last%20change-2018--04--28-green.svg)](/commits/master)
 [![packageversion](https://img.shields.io/badge/Package%20version-0.1.2.9000-green.svg?style=flat-square)](commits/master)
 [![Travis build
 status](https://travis-ci.org/mailund/tailr.svg?branch=master)](https://travis-ci.org/mailund/tailr)
@@ -66,15 +66,25 @@ factorial <- function(n, acc = 1) {
 }
 ```
 
-We can then, automatically, translate that into a looping version:
+We can then, automatically, translate that into a looping
+version:
 
 ``` r
-tr_factorial <- tailr::loop_transform(factorial, byte_compile = FALSE)
+tr_factorial <- tailr::loop_transform(factorial, byte_compile = FALSE, set_srcref = FALSE)
 tr_factorial
-#> function(n, acc = 1) {
-#>     if (n <= 1) acc
-#>     else factorial(n - 1, acc * n)
-#> }
+#> function (n, acc = 1) 
+#> .Primitive("{")(.tailr_n <- n, .tailr_acc <- acc, callCC(function(escape) {
+#>     repeat {
+#>         .Primitive("{")(n <- .tailr_n, acc <- .tailr_acc, {
+#>             if (n <= 1) 
+#>                 escape(acc)
+#>             else {
+#>                 .tailr_n <<- n - 1
+#>                 .tailr_acc <<- acc * n
+#>             }
+#>         }, next)
+#>     }
+#> }))
 
 tr_factorial(100)
 #> [1] 9.332622e+157
@@ -105,14 +115,14 @@ bm <- microbenchmark::microbenchmark(factorial(n),
                                      tr_factorial(n))
 bm
 #> Unit: microseconds
-#>               expr     min       lq       mean    median        uq
-#>       factorial(n) 814.266 929.6035 1181.85084 1031.0895 1166.4930
-#>  loop_factorial(n)  55.699  57.9475   92.05992   59.2350   61.3105
-#>    tr_factorial(n) 739.889 778.1470  869.85476  824.8865  977.5195
-#>       max neval
-#>  5161.836   100
-#>  2335.202   100
-#>  1510.211   100
+#>               expr     min       lq      mean   median      uq      max
+#>       factorial(n) 703.920 727.7975 870.87677 757.3180 853.383 5593.652
+#>  loop_factorial(n)  57.077  57.8795  81.62427  58.7395  59.524 2256.329
+#>    tr_factorial(n) 743.031 789.2195 887.74290 801.4475 881.000 2798.352
+#>  neval
+#>    100
+#>    100
+#>    100
 boxplot(bm)
 ```
 
@@ -202,13 +212,23 @@ tr_llength <- tailr::loop_transform(llength)
 The function we generate is rather complicated
 
 ``` r
-tr_llength
-#> function(llist, acc = 0) {
-#>     cases(llist,
-#>           NIL -> acc,
-#>           CONS(car, cdr) -> llength(cdr, acc + 1))
-#> }
-#> <bytecode: 0x7fee24397b60>
+body(tr_llength)
+#> .Primitive("{")(.tailr_llist <- llist, .tailr_acc <- acc, callCC(function(escape) {
+#>     repeat {
+#>         .Primitive("{")(llist <- .tailr_llist, acc <- .tailr_acc, 
+#>             {
+#>                 if (!rlang::is_null(..match_env <- pmatch::test_pattern(llist, 
+#>                   NIL))) 
+#>                   with(..match_env, escape(acc))
+#>                 else if (!rlang::is_null(..match_env <- pmatch::test_pattern(llist, 
+#>                   CONS(car, cdr)))) 
+#>                   with(..match_env, {
+#>                     .tailr_llist <<- cdr
+#>                     .tailr_acc <<- acc + 1
+#>                   })
+#>             }, next)
+#>     }
+#> }))
 ```
 
 but, then, it is not one we want to manually inspect in any case.
@@ -231,13 +251,13 @@ bm <- microbenchmark::microbenchmark(llength(test_llist),
 bm
 #> Unit: milliseconds
 #>                      expr      min       lq     mean   median       uq
-#>       llength(test_llist) 55.21795 58.08244 63.33243 60.60593 63.92709
-#>  loop_llength(test_llist) 59.17127 61.42575 66.34349 63.89574 67.29537
-#>    tr_llength(test_llist) 38.83469 40.59146 43.65161 42.20594 44.31466
+#>       llength(test_llist) 53.30460 59.41818 64.54885 62.88117 66.36482
+#>  loop_llength(test_llist) 57.20169 63.39339 68.49984 66.87254 70.93837
+#>    tr_llength(test_llist) 36.84511 41.57285 45.47031 44.43736 46.71715
 #>        max neval
-#>  122.21163   100
-#>  109.06998   100
-#>   75.36689   100
+#>   95.06241   100
+#>  100.59140   100
+#>  101.26630   100
 boxplot(bm)
 ```
 

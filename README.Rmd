@@ -64,7 +64,7 @@ factorial <- function(n, acc = 1) {
 We can then, automatically, translate that into a looping version:
 
 ```{r}
-tr_factorial <- tailr::loop_transform(factorial, byte_compile = FALSE)
+tr_factorial <- tailr::loop_transform(factorial, byte_compile = FALSE, set_srcref = FALSE)
 tr_factorial
 
 tr_factorial(100)
@@ -159,7 +159,7 @@ tr_llength <- tailr::loop_transform(llength)
 The function we generate is rather complicated
 
 ```{r}
-tr_llength
+body(tr_llength)
 ```
 
 but, then, it is not one we want to manually inspect in any case.
