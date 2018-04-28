@@ -167,6 +167,8 @@ can_loop_transform <- function(fun) {
 
 ## Function transformation ###################################################
 
+## Ensure returns are explicit #####
+
 # the rules for when to insert returns is such that it is easier to do the recursion
 # explicitly than use foolbox. Essentially, the top-down information should be different
 # for different parts of calls, and foolbox doesn't have handles for that.
@@ -233,11 +235,13 @@ make_returns_explicit_expr <- function(expr, in_function_parameter) {
     }
 }
 
+
 make_returns_explicit <- function(fn) {
     body(fn) <- make_returns_explicit_expr(body(fn), FALSE)
     fn
 }
 
+## Simplify returns #####
 simplify_returns <- function(fn) {
     simplify_callback <- function(expr, ...) {
         if (rlang::is_lang(expr[[2]]) && rlang::call_name(expr[[2]]) == "return")
@@ -250,12 +254,7 @@ simplify_returns <- function(fn) {
     )
 }
 
-#' Translate a return(<recursive-function-call>) expressions into
-#' a block that assigns the parameters to local variables and call `next`.
-#'
-#' @param recursive_call The call object where we get the parameters
-#' @param info           Information passed along to the transformations.
-#' @return The rewritten expression
+## Translate returns into calls to escape continuation ##########
 translate_recursive_call <- function(recursive_call, info) {
     expanded_call <- match.call(definition = info$fun, call = recursive_call)
     arguments <- as.list(expanded_call)[-1]
@@ -283,74 +282,24 @@ handle_recursive_returns <- function(fn, fun_name) {
     )
 }
 
-
-#' Make calls to return into calls to escapes.
-#'
-#' This function dispatches on a call object to set the context of recursive
-#' expression modifications.
-#'
-#' @param call_expr The call to modify.
-#' @param info  Information passed along with transformations.
-#' @return A modified expression.
-returns_to_escapes_call <- function(call_expr, info) {
-    call_name <- rlang::call_name(call_expr)
-    call_args <- rlang::call_args(call_expr)
-
-    switch(call_name,
-        # Handle returns
-        "return" = {
-            call_expr <- rlang::expr(escape(rlang::UQ(call_expr[[2]])))
-        },
-
-        # For all other calls we just recurse
-        {
-            for (i in seq_along(call_args)) {
-                call_expr[[i + 1]] <- returns_to_escapes(call_args[[i]], info)
-            }
-        }
+returns_to_escapes <- function(fn) {
+    return_callback <- function(expr, ...) rlang::expr(escape(rlang::UQ(expr[[2]])))
+    fn %>% rewrite_with(
+        rewrite_callbacks() %>% add_call_callback(`return`, return_callback)
     )
-
-    call_expr
 }
 
-#' Make calls to return into calls to escapes.
-#'
-#' @param expr An expression to transform
-#' @param info Information passed along the transformations.
-#' @return A modified expression.
-returns_to_escapes <- function(expr, info) {
-    if (rlang::is_atomic(expr) || rlang::is_pairlist(expr) ||
-        rlang::is_symbol(expr) || rlang::is_primitive(expr)) {
-        expr
-    } else {
-        stopifnot(rlang::is_lang(expr))
-        returns_to_escapes_call(expr, info)
-    }
-}
-
-#' Simplify nested code-blocks.
-#'
-#' If a call is \code{\{} and has a single expression inside it, replace it with that expression.
-#'
-#' @param expr The expression to rewrite
-#' @return The new expression
-simplify_nested_blocks <- function(expr) {
-    if (rlang::is_atomic(expr) || rlang::is_pairlist(expr) ||
-        rlang::is_symbol(expr) || rlang::is_primitive(expr)) {
-        expr
-    } else {
-        stopifnot(rlang::is_lang(expr))
-        call_name <- rlang::call_name(expr)
-        if (call_name == "{" && length(expr) == 2) {
-            simplify_nested_blocks(expr[[2]])
-        } else {
-            args <- rlang::call_args(expr)
-            for (i in seq_along(args)) {
-                expr[[i + 1]] <- simplify_nested_blocks(args[[i]])
-            }
+## Simplify nested code-blocks #############
+simplify_nested_blocks <- function(fn) {
+    simplify_callback <- function(expr, ...) {
+       if (rlang::is_lang(expr[[2]]) && rlang::call_name(expr[[2]]) == "{")
+            expr[[2]]
+        else
             expr
-        }
     }
+    fn %>% rewrite_with(
+        rewrite_callbacks() %>% add_call_callback(`{`, simplify_callback)
+    )
 }
 
 #' Construct the expression for a transformed function body.
@@ -368,7 +317,9 @@ build_transformed_function <- function(fun, info) {
     fun <- fun %>%
         make_returns_explicit() %>%
         simplify_returns() %>%
-        handle_recursive_returns(info$fun_name) # fixme: use of info
+        handle_recursive_returns(info$fun_name) %>% # fixme: use of info
+        returns_to_escapes() #%>%
+        #simplify_nested_blocks()
 
     fun_expr <- body(fun)
 
@@ -382,8 +333,7 @@ build_transformed_function <- function(fun, info) {
     #cat("\n=============================\n")
 
 
-    fun_expr <- returns_to_escapes(fun_expr, info)
-    fun_expr <- simplify_nested_blocks(fun_expr)
+    #fun_expr <- simplify_nested_blocks(fun_expr)
 
     # wrap everything in a new body...
     vars <- names(formals(info$fun))
