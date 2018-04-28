@@ -7,125 +7,6 @@ escape <- function(x) x # nocov
 
 ## Test for possibility of transformation #########################################
 
-# I need to import the Depends packagefor CHECK to work, so I might as well do it here...
-# Other than satisfying CHECK, I'm not using these imports since I qualify the functions
-# by their namespace.
-
-#' Tests if a call object can be transformed.
-#'
-#' @param call_name Name (function) of the call.
-#' @param call_arguments The call's arguments
-#' @param fun_name The name of the recursive function we want to transform
-#' @param fun_call_allowed Whether a recursive call is allowed at this point
-#' @param cc Current continuation to abort if a transformation is not possible
-#'
-#' @return TRUE, if the expression can be transformed. Invokes \code{cc} otherwise.
-can_call_be_transformed <- function(call_name, call_arguments,
-                                    fun_name, fun_call_allowed, cc) {
-    switch(call_name,
-        # Code blocks -- don't consider those calls.
-        "{" = {
-            for (arg in call_arguments) {
-                can_transform_rec(arg, fun_name, fun_call_allowed, cc)
-            }
-        },
-
-        # Explicit returns are not considered calls either.
-        "return" = {
-            for (arg in call_arguments) {
-                can_transform_rec(arg, fun_name, fun_call_allowed, cc)
-            }
-        },
-
-        # Eval is really just evaluation of an expression in the calling scope,
-        # so we shouldn't consider those function calls either... I'm not sure
-        # how to handle them when it comes to what they return, though, since it
-        # depends on the expression they will evaluate
-
-        "eval" = {
-            msg <- simpleWarning(
-                glue::glue(
-                    "This function contains an eval-expression. It is hard to work out if those ",
-                    "are tail-recursive, so such expressions are not analysed and left alone in ",
-                    "transformations."
-                ),
-                call = rlang::expr(eval(!!! call_arguments))
-            )
-            warning(msg)
-            return(TRUE) # get out, and hope the user knows what he is doing...
-        },
-
-        # With expressions are a bit like eval, I guess... don't consider them
-        # function calls.
-        "with" = {
-            for (arg in call_arguments) {
-                can_transform_rec(arg, fun_name, fun_call_allowed, cc)
-            }
-        },
-
-        # Selection
-        "if" = {
-            can_transform_rec(call_arguments[[1]], fun_name, fun_call_allowed, cc)
-            can_transform_rec(call_arguments[[2]], fun_name, TRUE, cc)
-            if (length(call_arguments) == 3) {
-                can_transform_rec(call_arguments[[3]], fun_name, TRUE, cc)
-            }
-        },
-
-        # Loops
-        "for" = {
-            warning("We can't yet handle loops.")
-            cc(FALSE)
-        },
-        "while" = {
-            warning("We can't yet handle loops.")
-            cc(FALSE)
-        },
-        "repeat" = {
-            warning("We can't yet handle loops.")
-            cc(FALSE)
-        },
-
-        # All other calls
-        {
-            if (call_name == fun_name && !fun_call_allowed) {
-                warn_msg <- simpleWarning(
-                    "The function cannot be transformed since it contains a recursive call inside a call.",
-                    call = NULL
-                )
-                warning(warn_msg)
-                cc(FALSE)
-            }
-            fun_call_allowed <- FALSE
-            for (arg in call_arguments) {
-                can_transform_rec(arg, fun_name, fun_call_allowed, cc)
-            }
-        }
-    )
-    return(TRUE)
-}
-
-#' Recursive call for testing if an expression can be transformed into a looping
-#' tail-recursion.
-#'
-#' @param expr The expression to test
-#' @param fun_name The name of the recursive function we want to transform
-#' @param fun_call_allowed Whether a recursive call is allowed at this point
-#' @param cc Current continuation, used to escape if the expression cannot be transformed.
-#'
-#' @return TRUE, if the expression can be transformed. Invokes \code{cc} otherwise.
-can_transform_rec <- function(expr, fun_name, fun_call_allowed, cc) {
-    if (rlang::is_atomic(expr) || rlang::is_pairlist(expr) ||
-        rlang::is_symbol(expr) || rlang::is_primitive(expr)) {
-        return(TRUE)
-    } else {
-        stopifnot(rlang::is_lang(expr))
-        call_name <- rlang::call_name(expr)
-        call_arguments <- rlang::call_args(expr)
-        can_call_be_transformed(call_name, call_arguments, fun_name, fun_call_allowed, cc)
-    }
-}
-
 
 check_function_argument <- function(fun) {
     fun_name <- rlang::get_expr(fun)
@@ -154,29 +35,102 @@ check_function_argument <- function(fun) {
     }
 }
 
-#' @describeIn can_loop_transform This version expects \code{fun_body} to be both tested
-#'                                and user-transformed.
-#'
-#' @param fun_name Name of the recursive function.
-#' @param fun_body The user-transformed function body.
-#' @param env      Environment used to look up variables used in \code{fun_body}.
-#'
-#' @export
-can_loop_transform_body <- function(fun_name, fun_body, fun, env) {
-    fun_body <- user_transform(fun_body, fun, env)
-    callCC(function(cc) can_transform_rec(fun_body, fun_name, TRUE, cc))
+check_can_call_be_transformed <- function(call_name, call_arguments,
+                                          fun_name, fun_call_allowed,
+                                          escape) {
+    # compute if a call is allowed -- which is what we return for the topdown
+    # parameter for other callbacks -- and abort using escape if
+    # we see a call when it is not allowed.
+    switch(call_name,
+        # Code blocks -- don't consider those calls.
+        "{" = return(fun_call_allowed),
+
+        # Explicit returns are not considered calls either.
+        "return" = return(fun_call_allowed),
+
+        # Eval is really just evaluation of an expression in the calling scope,
+        # so we shouldn't consider those function calls either... I'm not sure
+        # how to handle them when it comes to what they return, though, since it
+        # depends on the expression they will evaluate
+        "eval" = {
+            msg <- simpleWarning(
+                glue::glue(
+                    "This function contains an eval-expression. It is hard to work out if those ",
+                    "are tail-recursive, so such expressions are not analysed and left alone in ",
+                    "transformations."
+                ),
+                call = rlang::expr(eval(!!! call_arguments))
+            )
+            warning(msg)
+            return(fun_call_allowed) # get out, and hope the user knows what he is doing...
+        },
+
+        # With expressions are a bit like eval, I guess... don't consider them
+        # function calls.
+        "with" = return(fun_call_allowed),
+
+        # Selection
+        "if" = return(fun_call_allowed),
+
+        # Loops
+        "for" = {
+            warning("We can't yet handle loops.")
+            escape(FALSE)
+        },
+        "while" = {
+            warning("We can't yet handle loops.")
+            escape(FALSE)
+        },
+        "repeat" = {
+            warning("We can't yet handle loops.")
+            escape(FALSE)
+        },
+
+        # All other calls
+        {
+            if (call_name == fun_name && !fun_call_allowed) {
+                warn_msg <- simpleWarning(
+                    "The function cannot be transformed since it contains a recursive call inside a call.",
+                    call = NULL
+                )
+                warning(warn_msg)
+                escape(FALSE)
+            }
+            return(FALSE) # inside calls we do not allow recursive calls
+        }
+    )
+    stop("we shouldn't reach this point!")
 }
 
+
 #' @describeIn can_loop_transform This version expects \code{fun} to be quosure.
+#' @import foolbox
 #' @export
 can_loop_transform_ <- function(fun) {
     check_function_argument(fun)
 
-    fun_name <- rlang::get_expr(fun)
+    fun_name <- as.character(rlang::get_expr(fun))
     fun_env <- rlang::get_env(fun)
     fun <- rlang::eval_tidy(fun)
 
-    can_loop_transform_body(fun_name, body(fun), fun, fun_env)
+    check_call_callback <- function(expr, escape, topdown, ...) {
+        call_name <- rlang::call_name(expr)
+        call_arguments <- rlang::call_args(expr)
+        fun_call_allowed <- topdown
+        check_can_call_be_transformed(call_name, call_arguments, fun_name, fun_call_allowed, escape)
+    }
+    callCC(
+        function(escape) {
+            fun %>% user_transform() %>%
+                foolbox::analyse_with(
+                    foolbox::analysis_callbacks() %>%
+                        foolbox::with_topdown_call_callback(check_call_callback),
+                    escape = escape,
+                    topdown = TRUE # topdown is check for whether call is allowed
+                )
+            TRUE # get here and we can transform. FIXME: return transformed function instead?
+        }
+    )
 }
 
 
@@ -530,16 +484,17 @@ loop_transform <- function(fun, byte_compile = TRUE) {
     fun <- rlang::eval_tidy(fun)
     fun_name <- rlang::get_expr(fun_q)
     fun_env <- rlang::get_env(fun_q)
-    fun_body <- user_transform(body(fun), fun, fun_env)
 
 
-    if (!can_loop_transform_body(fun_name, fun_body, fun, fun_env)) {
+    if (!can_loop_transform_(fun_q)) {
         warning("Could not build a transformed function")
         return(fun)
     }
     info <- list(fun = fun, fun_name = fun_name)
 
+    fun_body <- body(user_transform(fun)) # fixme
     new_fun_body <- build_transformed_function(fun_body, info)
+
     result <- rlang::new_function(
         args = formals(fun),
         body = new_fun_body,

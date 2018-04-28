@@ -2,8 +2,8 @@ context("test-user-defined-transformations.R")
 
 test_that("we call the default transformation function", {
     f <- function(x) x
-    transformed_f_body <- user_transform(body(f))
-    expect_equal(body(f), transformed_f_body)
+    transformed_f <- user_transform(f)
+    expect_equal(body(f), body(transformed_f))
 })
 
 test_that("we transform functions with user-defined re-writing rules", {
@@ -19,8 +19,8 @@ test_that("we transform functions with user-defined re-writing rules", {
     attr(my_if_else, "tailr_transform") <- my_if_else_transform
 
     f <- function(x, y) my_if_else(x == y, x, f(y, y))
-    transformed_body <- user_transform(body(f), f)
-    expect_equal(transformed_body, quote(if (x == y) x else f(y, y)))
+    transformed <- user_transform(f)
+    expect_equal(body(transformed), quote(if (x == y) x else f(y, y)))
 })
 
 test_that("we can use user-defined re-writing rules from another package", {
@@ -52,18 +52,4 @@ test_that("we can use user-defined re-writing rules from another package", {
     for (n in 0:5) {
         expect_equal(n, llength(make_llist(n)))
     }
-})
-
-test_that("we handle errors", {
-    f <- function(x) g(x)
-
-    expect_error(
-        user_transform(f),
-        regexp = "The `expr' argument is not a quoted expression.*"
-    )
-
-    expect_error(
-        user_transform(body(f), f),
-        regexp = "The function g was not found in the provided scope."
-    )
 })
