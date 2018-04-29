@@ -4,13 +4,18 @@
 \alias{loop_transform}
 \title{Transform a function from recursive to looping.}
 \usage{
-loop_transform(fun, byte_compile = TRUE)
+loop_transform(fun, byte_compile = TRUE, set_srcref = TRUE)
 }
 \arguments{
 \item{fun}{The function to transform. Must be provided as a bare name.}
 
 \item{byte_compile}{Flag specifying whether to compile the function after
 transformation.}
+
+\item{set_srcref}{Flag specifying whether the "srcref" attribute should be
+set to the original value. If you do this, you can print
+the modified function and it will look like the original,
+but printing it will not show the actual, tranformed, source.}
 }
 \description{
 Since this function needs to handle recursive functions, it needs to know the

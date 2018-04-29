@@ -4,12 +4,12 @@
 \alias{build_transformed_function}
 \title{Construct the expression for a transformed function body.}
 \usage{
-build_transformed_function(fun_expr, info)
+build_transformed_function(fun, fun_name)
 }
 \arguments{
-\item{fun_expr}{The original function body.}
+\item{fun}{The original function}
 
-\item{info}{Information passed along the transformations.}
+\item{fun_name}{The name of the function we are transforming}
 }
 \value{
 The body of the transformed function.
