@@ -14,7 +14,7 @@ test_that("we transform functions with user-defined re-writing rules", {
         test <- expr[[2]]
         if_true <- expr[[3]]
         if_false <- expr[[4]]
-        rlang::expr(if (rlang::UQ(test)) rlang::UQ(if_true) else rlang::UQ(if_false))
+        rlang::expr(if (!!test) !!if_true else !!if_false)
     }
     attr(my_if_else, "tailr_transform") <- my_if_else_transform
 

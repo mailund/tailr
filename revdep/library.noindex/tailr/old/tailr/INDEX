@@ -1,0 +1,31 @@
+build_transformed_function
+                        Construct the expression for a transformed
+                        function body.
+can_call_be_transformed
+                        Tests if a call object can be transformed.
+can_loop_transform_body
+                        Tests if a function, provided by its name, can
+                        be transformed.
+can_transform_rec       Recursive call for testing if an expression can
+                        be transformed into a looping tail-recursion.
+handle_recursive_returns
+                        Handle the actual recursive calls
+handle_recursive_returns_call
+                        Handles the actual recursive returns
+loop_transform          Transform a function from recursive to looping.
+make_returns_explicit   Make exit points into explicit calls to return.
+make_returns_explicit_call
+                        Make exit points into explicit calls to return.
+returns_to_escapes      Make calls to return into calls to escapes.
+returns_to_escapes_call
+                        Make calls to return into calls to escapes.
+simplify_nested_blocks
+                        Simplify nested code-blocks.
+simplify_returns        Remove return(return(...)) expressions
+simplify_returns_call   Removes return(return(...)) cases.
+translate_recursive_call
+                        Translate a return(<recursive-function-call>)
+                        expressions into a block that assigns the
+                        parameters to local variables and call 'next'.
+user_transform          Apply user transformations depths-first.
+user_transform_rec      Apply user transformations depths-first.

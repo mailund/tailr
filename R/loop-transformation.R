@@ -262,7 +262,7 @@ translate_recursive_call <- function(recursive_call, info) {
     tmp_assignments <- vector("list", length = length(arguments))
     for (i in seq_along(arguments)) {
         tmp_var <- parse(text = paste(".tailr_", vars[i], sep = ""))[[1]]
-        tmp_assignments[[i]] <- rlang::expr(rlang::UQ(tmp_var) <<- rlang::UQ(arguments[[i]]))
+        tmp_assignments[[i]] <- rlang::expr(!!tmp_var <<- !!arguments[[i]])
     }
     as.call(c(
         rlang::sym("{"),
@@ -283,7 +283,7 @@ handle_recursive_returns <- function(fn, fun_name) {
 }
 
 returns_to_escapes <- function(fn) {
-    return_callback <- function(expr, ...) rlang::expr(escape(rlang::UQ(expr[[2]])))
+    return_callback <- function(expr, ...) rlang::expr(escape(!!expr[[2]]))
     fn %>% rewrite_with(
         rewrite_callbacks() %>% add_call_callback(`return`, return_callback)
     )
@@ -312,8 +312,8 @@ build_transformed_function <- function(fun, fun_name) {
     for (i in seq_along(vars)) {
         local_var <- as.symbol(vars[[i]])
         tmp_var <- parse(text = paste(".tailr_", vars[[i]], sep = ""))[[1]]
-        tmp_assignments[[i]] <- rlang::expr(rlang::UQ(tmp_var) <- rlang::UQ(local_var))
-        locals_assignments[[i]] <- rlang::expr(rlang::UQ(local_var) <- rlang::UQ(tmp_var))
+        tmp_assignments[[i]] <- rlang::expr(!!tmp_var <- !!local_var)
+        locals_assignments[[i]] <- rlang::expr(!!local_var <- !!tmp_var)
     }
 
     repeat_body <- as.call(

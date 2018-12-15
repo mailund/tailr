@@ -1,12 +1,11 @@
 
-* This is release 0.1.2 that resolves an issue when transformations were
-  used as part of other packages. CMD CHECK would fail if tailr wasn't
-  imported but just called.
+* This is release 0.1.3 that only contains changes for rlang 0.3.0 compatibility.
+  It does not add any new functionality.
 
 ## Test environments
 
-* local OS X install, R 3.5.0
-* ubuntu 14.04 (on travis-ci), R 3.2 - 3.4
+* local OS X install, R 3.5.1
+* ubuntu 14.04 (on travis-ci), R 3.2 - 3.5
 * win-builder (devel and release)
 * Rhub:
     - Windows Server 2008 R2 SP1, R-devel, 32/64 bit
@@ -16,7 +15,20 @@
 
 ## R CMD check results
 
-0 errors | 0 warnings | 0 notes
+0 errors | 0 warnings | 1 note
+
+The node is caused by expressions on the form `!!exp1 <- !!exp2`
+which are handled correctly by rlang 0.3.0 but raises issues
+with the CHECK:
+
+❯ checking R code for possible problems ... NOTE
+  build_transformed_function: no visible global function definition for
+    ‘!<-’
+  translate_recursive_call: no visible global function definition for
+    ‘!<-’
+  Undefined global functions or variables:
+    !<-
+
 
 ## Downstream dependencies
 
