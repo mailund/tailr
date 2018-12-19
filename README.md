@@ -8,7 +8,7 @@
 [![Project Status: Active – The project has reached a stable, usable
 state and is being actively
 developed.](http://www.repostatus.org/badges/latest/active.svg)](http://www.repostatus.org/#active)
-[![Last-changedate](https://img.shields.io/badge/last%20change-2018--08--27-green.svg)](/commits/master)
+[![Last-changedate](https://img.shields.io/badge/last%20change-2018--12--19-green.svg)](/commits/master)
 [![packageversion](https://img.shields.io/badge/Package%20version-0.1.2.9000-green.svg?style=flat-square)](commits/master)
 [![Travis build
 status](https://travis-ci.org/mailund/tailr.svg?branch=master)](https://travis-ci.org/mailund/tailr)
@@ -140,9 +140,9 @@ bm <- microbenchmark::microbenchmark(factorial(n),
 bm
 #> Unit: microseconds
 #>               expr     min       lq      mean   median       uq      max
-#>       factorial(n) 513.691 553.7360 692.20023 588.7665 688.9380 4537.763
-#>    tr_factorial(n) 643.951 672.4245 749.39474 691.8510 729.9475 2066.655
-#>  loop_factorial(n)  40.158  40.6975  67.22614  41.4170  42.7735 2485.322
+#>       factorial(n) 502.353 592.2195 798.68890 676.7220 881.0735 4826.670
+#>    tr_factorial(n) 642.510 695.8220 773.12496 743.4500 776.2790 3023.561
+#>  loop_factorial(n)  48.411  50.1175  76.43362  51.3625  54.0435 2296.244
 #>  neval
 #>    100
 #>    100
@@ -168,11 +168,10 @@ recursive functions that matches different patterns of their input. A
 function for computing the length of a linked list can look like this:
 
 ``` r
-llength <- function(llist, acc = 0) {
-    cases(llist,
-          NIL -> acc,
-          CONS(car, cdr) -> llength(cdr, acc + 1))
-}
+llength <- case_func(acc = 0,
+   NIL -> acc,
+   CONS(car, cdr) -> llength(cdr, acc + 1)
+)
 ```
 
 ``` r
@@ -183,22 +182,31 @@ The function we generate is rather complicated
 
 ``` r
 body(tr_llength)
-#> .Primitive("{")(.tailr_llist <- llist, .tailr_acc <- acc, callCC(function(escape) {
-#>     repeat {
-#>         .Primitive("{")(llist <- .tailr_llist, acc <- .tailr_acc, 
-#>             {
-#>                 if (!rlang::is_null(..match_env <- pmatch::test_pattern(llist, 
-#>                   NIL))) 
-#>                   with(..match_env, escape(acc))
-#>                 else if (!rlang::is_null(..match_env <- pmatch::test_pattern(llist, 
-#>                   CONS(car, cdr)))) 
-#>                   with(..match_env, {
-#>                     .tailr_llist <<- cdr
-#>                     .tailr_acc <<- acc + 1
-#>                   })
-#>             }, next)
-#>     }
-#> }))
+#> .Primitive("{")(.tailr_.match_expr <- .match_expr, .tailr_acc <- acc, 
+#>     callCC(function(escape) {
+#>         repeat {
+#>             .Primitive("{")(.match_expr <- .tailr_.match_expr, 
+#>                 acc <- .tailr_acc, if (is.na(.match_expr) && 
+#>                   attr(.match_expr, "constructor") == "NIL") 
+#>                   escape(acc)
+#>                 else if ({
+#>                   .cons <- attr(.match_expr, "constructor")
+#>                   !is.null(.cons) && .cons == "CONS"
+#>                 } && {
+#>                   car <- .match_expr$car
+#>                   TRUE
+#>                 } && {
+#>                   cdr <- .match_expr$cdr
+#>                   TRUE
+#>                 }) {
+#>                   .tailr_.match_expr <<- cdr
+#>                   .tailr_acc <<- acc + 1
+#>                 }
+#>                 else {
+#>                   escape(stop("None of the patterns match."))
+#>                 }, next)
+#>         }
+#>     }))
 ```
 
 but, then, it is not one we want to manually inspect in any case.
@@ -207,7 +215,7 @@ It is not too hard to implement this function with a loop either, but it
 is not as simple as the recursive function:
 
 ``` r
-is_nil <- function(llist) cases(llist, NIL -> TRUE, otherwise -> FALSE)
+is_nil <- case_func(NIL -> TRUE, otherwise -> FALSE)
 loop_llength <- function(llist) {
     len <- 0
     while (!is_nil(llist)) {
@@ -235,58 +243,28 @@ bm <- microbenchmark::microbenchmark(llength(test_llist),
                                      tr_llength(test_llist),
                                      loop_llength(test_llist))
 bm
-#> Unit: milliseconds
-#>                      expr      min       lq     mean   median       uq
-#>       llength(test_llist) 53.76697 58.99930 65.33068 61.43352 70.43616
-#>    tr_llength(test_llist) 38.45880 40.90436 44.03367 42.38753 44.89655
-#>  loop_llength(test_llist) 31.69172 34.17297 36.85065 35.24668 39.61324
-#>        max neval
-#>  143.49614   100
-#>   62.86479   100
-#>   49.27966   100
+#> Unit: microseconds
+#>                      expr     min       lq     mean   median       uq
+#>       llength(test_llist) 265.918 285.5995 366.3221 304.5285 339.3260
+#>    tr_llength(test_llist) 355.793 373.5675 463.0679 400.2200 429.5800
+#>  loop_llength(test_llist) 144.501 158.7770 220.5217 171.1740 189.5785
+#>       max neval
+#>  4607.342   100
+#>  3056.753   100
+#>  4389.339   100
 boxplot(bm)
 ```
 
 <img src="man/figures/README-unnamed-chunk-11-1.png" width="100%" />
 
-As you have no doubt noticed about `llength`, it is not in fact
-tail-recursive, from the look of it, since the final recursion is
-enclosed by a call to `cases`. The function is only tail-recursive
-because it can be translated into one by rewriting the `cases` function
-call to a sequence of `if`-statements. The `tailr` package doesn’t
-handle `cases` from `pmatch` by knowing about this package. Instead, it
-has a mechanism that lets you provide re-writing rules.
-
-If you set the attribute “tailr\_transform” on a function, and set this
-attribute to a function, then that function will be called when `tailr`
-sees the function, before it attempts any other processing. The
-attribute must be a function that maps an expression to another,
-re-written, expression. The one for `cases` looks like this:
-
-``` r
-tailr_transform_call <- function(expr) {
-    stopifnot(rlang::call_name(expr) == "cases")
-
-    args <- rlang::call_args(expr)
-    value <- args[[1]]
-    patterns <- args[-1]
-    eval(rlang::expr(cases_expr(!!value, !!!patterns)))
-}
-attr(cases, "tailr_transform") <- tailr_transform_call
-```
-
-You can use this mechanism to support tail-recursion for
-non-tail-recursive functions that can be rewritten to be tail-recursive.
-
 More examples:
 
 ``` r
-llcontains <- function(lst, x) {
-    cases(lst, 
-          NIL -> FALSE,
-          CONS(car, cdr) -> if (car == x) TRUE else llcontains(cdr, x)
-    )
-}
+llcontains <- case_func(x,
+    NIL -> FALSE,
+    CONS(car, cdr) -> if (car == x) TRUE else llcontains(cdr, x)
+)
+
 tr_llcontains <- tailr::loop_transform(llcontains)
 
 loop_contains <- function(lst, x) {
@@ -301,37 +279,32 @@ bm <- microbenchmark::microbenchmark(llcontains(lst, 1001),
                                      tr_llcontains(lst, 1001),
                                      loop_contains(lst, 1001))
 bm
-#> Unit: milliseconds
-#>                      expr      min       lq     mean   median       uq
-#>     llcontains(lst, 1001) 57.39536 60.70168 64.48344 62.77156 64.79832
-#>  tr_llcontains(lst, 1001) 39.28990 41.88991 43.20265 42.90343 44.30597
-#>  loop_contains(lst, 1001) 32.09799 33.72188 35.15433 34.67652 36.43608
-#>        max neval
-#>  119.90418   100
-#>   53.53174   100
-#>   41.43686   100
+#> Unit: microseconds
+#>                      expr     min       lq     mean   median       uq
+#>     llcontains(lst, 1001) 258.625 265.2965 331.9641 270.0955 286.8210
+#>  tr_llcontains(lst, 1001) 361.643 367.0120 387.4455 372.1275 395.8610
+#>  loop_contains(lst, 1001) 196.441 206.9190 286.2056 210.2610 227.8175
+#>       max neval
+#>  5324.857   100
+#>   622.783   100
+#>  2461.244   100
 boxplot(bm)
 ```
 
 <img src="man/figures/README-unnamed-chunk-12-1.png" width="100%" />
 
 ``` r
-llrev <- function(llist, acc = NIL) {
-    pmatch::cases(
-        llist,
-        NIL -> acc,
-        CONS(car, cdr) -> llrev(cdr, CONS(car, acc))
-    )
-}
+llrev <- pmatch::case_func(acc = NIL,
+    NIL -> acc,
+    CONS(car, cdr) -> llrev(cdr, CONS(car, acc))
+)
 
-bubble <- function(llist, swapped = FALSE, acc = NIL) {
-    cases(llist,
-          CONS(first, CONS(second, rest)) -> 
-              if (first > second) bubble(CONS(first, rest), TRUE, CONS(second, acc))
-              else bubble(CONS(second, rest), swapped, CONS(first, acc)),
-          CONS(x, NIL) -> list(new_list = llrev(CONS(x, acc)), swapped = swapped)
-    )
-}
+bubble <- case_func(swapped = FALSE, acc = NIL,
+    CONS(first, CONS(second, rest)) -> 
+        if (first > second) bubble(CONS(first, rest), TRUE, CONS(second, acc))
+        else bubble(CONS(second, rest), swapped, CONS(first, acc)),
+    CONS(x, NIL) -> list(new_list = llrev(CONS(x, acc)), swapped = swapped)
+)
 
 bubble_sort <- function(lst) {
     if (is_nil(lst)) return(lst)
@@ -348,23 +321,19 @@ bubble_sort(lst)
 ```
 
 ``` r
-tr_llrev <- function(llist, acc = NIL) {
-    pmatch::cases(
-        llist,
-        NIL -> acc,
-        CONS(car, cdr) -> llrev(cdr, CONS(car, acc))
-    )
-}
+tr_llrev <- pmatch::case_func(acc = NIL,
+    NIL -> acc,
+    CONS(car, cdr) -> llrev(cdr, CONS(car, acc))
+)
+
 tr_llrev <- tailr::loop_transform(tr_llrev)
 
-tr_bubble <- function(llist, swapped = FALSE, acc = NIL) {
-    cases(llist,
-          CONS(first, CONS(second, rest)) -> 
-              if (first > second) tr_bubble(CONS(first, rest), TRUE, CONS(second, acc))
-              else tr_bubble(CONS(second, rest), swapped, CONS(first, acc)),
-          CONS(x, NIL) -> list(new_list = tr_llrev(CONS(x, acc)), swapped = swapped)
-    )
-}
+tr_bubble <- case_func(swapped = FALSE, acc = NIL,
+    CONS(first, CONS(second, rest)) -> 
+        if (first > second) tr_bubble(CONS(first, rest), TRUE, CONS(second, acc))
+        else tr_bubble(CONS(second, rest), swapped, CONS(first, acc)),
+    CONS(x, NIL) -> list(new_list = tr_llrev(CONS(x, acc)), swapped = swapped)
+)
 tr_bubble <- tailr::loop_transform(tr_bubble)
 
 tr_bubble_sort <- function(lst) {
@@ -431,15 +400,15 @@ bm <- microbenchmark::microbenchmark(bubble_sort(lst),
                                      tr_bubble_sort(lst),
                                      loop_bubble(lst))
 bm
-#> Unit: milliseconds
-#>                 expr        min        lq       mean     median        uq
-#>     bubble_sort(lst) 145.075067 154.17486 157.796604 157.519846 160.66723
-#>  tr_bubble_sort(lst) 124.090615 131.36796 134.359320 133.240386 135.12681
-#>     loop_bubble(lst)   8.558761   9.19512   9.889474   9.600241  10.44961
+#> Unit: microseconds
+#>                 expr      min       lq      mean   median       uq
+#>     bubble_sort(lst) 3455.177 3704.927 4142.7253 3938.028 4169.132
+#>  tr_bubble_sort(lst) 3823.526 4093.134 4485.9163 4251.283 4488.590
+#>     loop_bubble(lst)  104.768  114.279  125.2882  122.227  131.301
 #>        max neval
-#>  198.65582   100
-#>  181.74624   100
-#>   15.54705   100
+#>   6587.043   100
+#>  11726.912   100
+#>    206.499   100
 boxplot(bm)
 ```
 

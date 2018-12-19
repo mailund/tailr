@@ -135,11 +135,10 @@ llist := NIL | CONS(car, cdr : llist)
 A natural way to process linked lists using pattern matching is to write recursive functions that matches different patterns of their input. A function for computing the length of a linked list can look like this:
 
 ```{r}
-llength <- function(llist, acc = 0) {
-    cases(llist,
-          NIL -> acc,
-          CONS(car, cdr) -> llength(cdr, acc + 1))
-}
+llength <- case_func(acc = 0,
+   NIL -> acc,
+   CONS(car, cdr) -> llength(cdr, acc + 1)
+)
 ```
 
 ```{r}
@@ -157,7 +156,7 @@ but, then, it is not one we want to manually inspect in any case.
 It is not too hard to implement this function with a loop either, but it is not as simple as the recursive function:
 
 ```{r}
-is_nil <- function(llist) cases(llist, NIL -> TRUE, otherwise -> FALSE)
+is_nil <- case_func(NIL -> TRUE, otherwise -> FALSE)
 loop_llength <- function(llist) {
     len <- 0
     while (!is_nil(llist)) {
@@ -186,33 +185,15 @@ bm
 boxplot(bm)
 ```
 
-As you have no doubt noticed about `llength`, it is not in fact tail-recursive, from the look of it, since the final recursion is enclosed by a call to `cases`. The function is only tail-recursive because it can be translated into one by rewriting the `cases` function call to a sequence of `if`-statements. The `tailr` package doesn't handle `cases` from `pmatch` by knowing about this package. Instead, it has a mechanism that lets you provide re-writing rules.
-
-If you set the attribute "tailr_transform" on a function, and set this attribute to a function, then that function will be called when `tailr` sees the function, before it attempts any other processing. The attribute must be a function that maps an expression to another, re-written, expression. The one for `cases` looks like this:
-
-```r
-tailr_transform_call <- function(expr) {
-    stopifnot(rlang::call_name(expr) == "cases")
-
-    args <- rlang::call_args(expr)
-    value <- args[[1]]
-    patterns <- args[-1]
-    eval(rlang::expr(cases_expr(!!value, !!!patterns)))
-}
-attr(cases, "tailr_transform") <- tailr_transform_call
-```
-
-You can use this mechanism to support tail-recursion for non-tail-recursive functions that can be rewritten to be tail-recursive.
 
 More examples:
 
 ```{r}
-llcontains <- function(lst, x) {
-    cases(lst, 
-          NIL -> FALSE,
-          CONS(car, cdr) -> if (car == x) TRUE else llcontains(cdr, x)
-    )
-}
+llcontains <- case_func(x,
+    NIL -> FALSE,
+    CONS(car, cdr) -> if (car == x) TRUE else llcontains(cdr, x)
+)
+
 tr_llcontains <- tailr::loop_transform(llcontains)
 
 loop_contains <- function(lst, x) {
@@ -232,22 +213,17 @@ boxplot(bm)
 ```
 
 ```{r}
-llrev <- function(llist, acc = NIL) {
-    pmatch::cases(
-        llist,
-        NIL -> acc,
-        CONS(car, cdr) -> llrev(cdr, CONS(car, acc))
-    )
-}
+llrev <- pmatch::case_func(acc = NIL,
+    NIL -> acc,
+    CONS(car, cdr) -> llrev(cdr, CONS(car, acc))
+)
 
-bubble <- function(llist, swapped = FALSE, acc = NIL) {
-    cases(llist,
-          CONS(first, CONS(second, rest)) -> 
-              if (first > second) bubble(CONS(first, rest), TRUE, CONS(second, acc))
-              else bubble(CONS(second, rest), swapped, CONS(first, acc)),
-          CONS(x, NIL) -> list(new_list = llrev(CONS(x, acc)), swapped = swapped)
-    )
-}
+bubble <- case_func(swapped = FALSE, acc = NIL,
+    CONS(first, CONS(second, rest)) -> 
+        if (first > second) bubble(CONS(first, rest), TRUE, CONS(second, acc))
+        else bubble(CONS(second, rest), swapped, CONS(first, acc)),
+    CONS(x, NIL) -> list(new_list = llrev(CONS(x, acc)), swapped = swapped)
+)
 
 bubble_sort <- function(lst) {
     if (is_nil(lst)) return(lst)
@@ -263,23 +239,19 @@ bubble_sort(lst)
 ```
 
 ```{r}
-tr_llrev <- function(llist, acc = NIL) {
-    pmatch::cases(
-        llist,
-        NIL -> acc,
-        CONS(car, cdr) -> llrev(cdr, CONS(car, acc))
-    )
-}
+tr_llrev <- pmatch::case_func(acc = NIL,
+    NIL -> acc,
+    CONS(car, cdr) -> llrev(cdr, CONS(car, acc))
+)
+
 tr_llrev <- tailr::loop_transform(tr_llrev)
 
-tr_bubble <- function(llist, swapped = FALSE, acc = NIL) {
-    cases(llist,
-          CONS(first, CONS(second, rest)) -> 
-              if (first > second) tr_bubble(CONS(first, rest), TRUE, CONS(second, acc))
-              else tr_bubble(CONS(second, rest), swapped, CONS(first, acc)),
-          CONS(x, NIL) -> list(new_list = tr_llrev(CONS(x, acc)), swapped = swapped)
-    )
-}
+tr_bubble <- case_func(swapped = FALSE, acc = NIL,
+    CONS(first, CONS(second, rest)) -> 
+        if (first > second) tr_bubble(CONS(first, rest), TRUE, CONS(second, acc))
+        else tr_bubble(CONS(second, rest), swapped, CONS(first, acc)),
+    CONS(x, NIL) -> list(new_list = tr_llrev(CONS(x, acc)), swapped = swapped)
+)
 tr_bubble <- tailr::loop_transform(tr_bubble)
 
 tr_bubble_sort <- function(lst) {
