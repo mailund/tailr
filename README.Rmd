@@ -185,6 +185,7 @@ bm
 boxplot(bm)
 ```
 
+**FIXME:** The main reason for this is that the running time is dominated by the cost of `pmatch`. If I manage to get that faster, the iterative function might end being much faster here as well.
 
 More examples:
 

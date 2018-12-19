@@ -140,9 +140,9 @@ bm <- microbenchmark::microbenchmark(factorial(n),
 bm
 #> Unit: microseconds
 #>               expr     min       lq      mean   median       uq      max
-#>       factorial(n) 502.353 592.2195 798.68890 676.7220 881.0735 4826.670
-#>    tr_factorial(n) 642.510 695.8220 773.12496 743.4500 776.2790 3023.561
-#>  loop_factorial(n)  48.411  50.1175  76.43362  51.3625  54.0435 2296.244
+#>       factorial(n) 510.170 548.6400 692.13391 593.0185 662.8700 5015.846
+#>    tr_factorial(n) 650.143 675.7145 741.53741 705.3390 732.8235 2867.557
+#>  loop_factorial(n)  47.601  48.6105  76.86726  49.2710  52.7560 2637.968
 #>  neval
 #>    100
 #>    100
@@ -245,17 +245,21 @@ bm <- microbenchmark::microbenchmark(llength(test_llist),
 bm
 #> Unit: microseconds
 #>                      expr     min       lq     mean   median       uq
-#>       llength(test_llist) 265.918 285.5995 366.3221 304.5285 339.3260
-#>    tr_llength(test_llist) 355.793 373.5675 463.0679 400.2200 429.5800
-#>  loop_llength(test_llist) 144.501 158.7770 220.5217 171.1740 189.5785
+#>       llength(test_llist) 270.776 285.2205 384.5874 300.1905 325.4885
+#>    tr_llength(test_llist) 357.037 374.4325 418.4112 387.9800 412.7885
+#>  loop_llength(test_llist) 144.618 154.0980 221.8522 160.4235 175.0040
 #>       max neval
-#>  4607.342   100
-#>  3056.753   100
-#>  4389.339   100
+#>  4886.636   100
+#>  2318.699   100
+#>  5466.565   100
 boxplot(bm)
 ```
 
 <img src="man/figures/README-unnamed-chunk-11-1.png" width="100%" />
+
+**FIXME:** The main reason for this is that the running time is
+dominated by the cost of `pmatch`. If I manage to get that faster, the
+iterative function might end being much faster here as well.
 
 More examples:
 
@@ -281,13 +285,13 @@ bm <- microbenchmark::microbenchmark(llcontains(lst, 1001),
 bm
 #> Unit: microseconds
 #>                      expr     min       lq     mean   median       uq
-#>     llcontains(lst, 1001) 258.625 265.2965 331.9641 270.0955 286.8210
-#>  tr_llcontains(lst, 1001) 361.643 367.0120 387.4455 372.1275 395.8610
-#>  loop_contains(lst, 1001) 196.441 206.9190 286.2056 210.2610 227.8175
+#>     llcontains(lst, 1001) 259.903 262.8160 343.9029 269.3025 276.7305
+#>  tr_llcontains(lst, 1001) 362.543 369.0980 412.5989 372.7685 388.0770
+#>  loop_contains(lst, 1001) 199.942 204.3275 238.1532 209.8665 216.5210
 #>       max neval
-#>  5324.857   100
-#>   622.783   100
-#>  2461.244   100
+#>  4959.340   100
+#>  3285.773   100
+#>  2746.243   100
 boxplot(bm)
 ```
 
@@ -401,14 +405,14 @@ bm <- microbenchmark::microbenchmark(bubble_sort(lst),
                                      loop_bubble(lst))
 bm
 #> Unit: microseconds
-#>                 expr      min       lq      mean   median       uq
-#>     bubble_sort(lst) 3455.177 3704.927 4142.7253 3938.028 4169.132
-#>  tr_bubble_sort(lst) 3823.526 4093.134 4485.9163 4251.283 4488.590
-#>     loop_bubble(lst)  104.768  114.279  125.2882  122.227  131.301
+#>                 expr      min        lq      mean   median        uq
+#>     bubble_sort(lst) 3466.611 3808.9600 4222.5333 3971.868 4139.7010
+#>  tr_bubble_sort(lst) 3823.465 4192.0190 4526.8456 4325.548 4535.4200
+#>     loop_bubble(lst)  104.267  120.0635  129.5123  126.008  136.0245
 #>        max neval
-#>   6587.043   100
-#>  11726.912   100
-#>    206.499   100
+#>  12112.025   100
+#>   7323.989   100
+#>    188.959   100
 boxplot(bm)
 ```
 
