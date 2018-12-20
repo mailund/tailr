@@ -4,7 +4,7 @@
 # when we actually call a `escape` function, it is a continuation from calls to
 # `callCC`.
 escape <- identity # nocov
-`!<-` <- function(x, value) value  # nocov -- also to silence NOTE
+`!<-` <- function(x, value) value  # nocov -- also to silence notes
 
 ## Test for possibility of transformation #########################################
 
