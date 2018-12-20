@@ -24,21 +24,4 @@
 
 ## R CMD check results
 
-0 errors | 0 warnings | 1 note
-
-The node is caused by expressions on the form `!!exp1 <- !!exp2`
-which are handled correctly by rlang 0.3.0 but raises issues
-with the CHECK:
-
-❯ checking R code for possible problems ... NOTE
-  build_transformed_function: no visible global function definition for
-    ‘!<-’
-  translate_recursive_call: no visible global function definition for
-    ‘!<-’
-  Undefined global functions or variables:
-    !<-
-
-
-## Downstream dependencies
-
- * pmatch -- checks without issues using this release.
+0 errors | 0 warnings | 0 notes
