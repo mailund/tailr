@@ -1,4 +1,7 @@
 
+# This is a resubmission of version 0.1.3 that silences a NOTE
+  caused by quasi-quotation rlang calls.
+
 # Main changes for version 0.1.3
 
 * Rewrote transformations to use the foolbox framework. (new dependency)
