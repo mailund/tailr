@@ -11,9 +11,10 @@ LazyData: true
 ByteCompile: true
 Depends: 
     R (>= 3.2),
-    rlang (>= 0.3.0),
-    glue,
     foolbox
+Imports:
+    rlang (>= 0.3.0),
+    glue
 Suggests: 
     covr,
     testthat,

@@ -3,7 +3,8 @@
 # we would otherwise get a complaint that `escape` is not defined. Everywhere
 # when we actually call a `escape` function, it is a continuation from calls to
 # `callCC`.
-escape <- function(x) x # nocov
+escape <- identity # nocov
+`!<-` <- function(x, value) value  # nocov -- also to silence NOTE
 
 ## Test for possibility of transformation #########################################
 
@@ -152,10 +153,10 @@ can_loop_transform_ <- function(fun) {
 #'     if (n <= 1) 1 else n * factorial(n - 1)
 #' factorial_acc <- function(n, acc = 1)
 #'     if (n <= 1) acc else factorial_acc(n - 1, n * acc)
-#' 
+#'
 #' can_loop_transform(factorial) # FALSE -- and prints a warning
 #' can_loop_transform(factorial_acc) # TRUE
-#' 
+#'
 #' can_loop_transform_(rlang::quo(factorial)) # FALSE -- and prints a warning
 #' can_loop_transform_(rlang::quo(factorial_acc)) # TRUE
 #' @describeIn can_loop_transform This version quotes \code{fun} itself.
