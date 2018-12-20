@@ -8,7 +8,7 @@
 [![Project Status: Active – The project has reached a stable, usable
 state and is being actively
 developed.](http://www.repostatus.org/badges/latest/active.svg)](http://www.repostatus.org/#active)
-[![Last-changedate](https://img.shields.io/badge/last%20change-2018--12--19-green.svg)](/commits/master)
+[![Last-changedate](https://img.shields.io/badge/last%20change-2018--12--20-green.svg)](/commits/master)
 [![packageversion](https://img.shields.io/badge/Package%20version-0.1.2.9000-green.svg?style=flat-square)](commits/master)
 [![Travis build
 status](https://travis-ci.org/mailund/tailr.svg?branch=master)](https://travis-ci.org/mailund/tailr)
@@ -140,9 +140,9 @@ bm <- microbenchmark::microbenchmark(factorial(n),
 bm
 #> Unit: microseconds
 #>               expr     min       lq      mean   median       uq      max
-#>       factorial(n) 510.170 548.6400 692.13391 593.0185 662.8700 5015.846
-#>    tr_factorial(n) 650.143 675.7145 741.53741 705.3390 732.8235 2867.557
-#>  loop_factorial(n)  47.601  48.6105  76.86726  49.2710  52.7560 2637.968
+#>       factorial(n) 699.833 790.4000 994.13872 856.2115 1076.836 5492.965
+#>    tr_factorial(n) 780.342 803.4845 939.39344 838.3140 1047.651 2804.756
+#>  loop_factorial(n)  57.173  59.7730  85.75384  60.6195   61.887 2359.777
 #>  neval
 #>    100
 #>    100
@@ -244,14 +244,14 @@ bm <- microbenchmark::microbenchmark(llength(test_llist),
                                      loop_llength(test_llist))
 bm
 #> Unit: microseconds
-#>                      expr     min       lq     mean   median       uq
-#>       llength(test_llist) 270.776 285.2205 384.5874 300.1905 325.4885
-#>    tr_llength(test_llist) 357.037 374.4325 418.4112 387.9800 412.7885
-#>  loop_llength(test_llist) 144.618 154.0980 221.8522 160.4235 175.0040
+#>                      expr     min      lq     mean   median       uq
+#>       llength(test_llist) 311.461 314.529 410.0324 318.8050 327.9455
+#>    tr_llength(test_llist) 422.970 426.982 481.7691 430.3400 458.4060
+#>  loop_llength(test_llist) 169.677 171.921 235.7967 173.4075 177.2230
 #>       max neval
-#>  4886.636   100
-#>  2318.699   100
-#>  5466.565   100
+#>  5551.296   100
+#>  3257.986   100
+#>  5502.246   100
 boxplot(bm)
 ```
 
@@ -285,13 +285,13 @@ bm <- microbenchmark::microbenchmark(llcontains(lst, 1001),
 bm
 #> Unit: microseconds
 #>                      expr     min       lq     mean   median       uq
-#>     llcontains(lst, 1001) 259.903 262.8160 343.9029 269.3025 276.7305
-#>  tr_llcontains(lst, 1001) 362.543 369.0980 412.5989 372.7685 388.0770
-#>  loop_contains(lst, 1001) 199.942 204.3275 238.1532 209.8665 216.5210
+#>     llcontains(lst, 1001) 308.417 320.6750 461.6773 335.1845 376.4935
+#>  tr_llcontains(lst, 1001) 432.907 448.2985 509.1565 469.4505 504.8375
+#>  loop_contains(lst, 1001) 235.567 241.9755 306.6966 258.8265 286.5830
 #>       max neval
-#>  4959.340   100
-#>  3285.773   100
-#>  2746.243   100
+#>  5073.269   100
+#>  2596.863   100
+#>  2548.667   100
 boxplot(bm)
 ```
 
@@ -405,14 +405,14 @@ bm <- microbenchmark::microbenchmark(bubble_sort(lst),
                                      loop_bubble(lst))
 bm
 #> Unit: microseconds
-#>                 expr      min        lq      mean   median        uq
-#>     bubble_sort(lst) 3466.611 3808.9600 4222.5333 3971.868 4139.7010
-#>  tr_bubble_sort(lst) 3823.465 4192.0190 4526.8456 4325.548 4535.4200
-#>     loop_bubble(lst)  104.267  120.0635  129.5123  126.008  136.0245
+#>                 expr      min       lq     mean    median       uq
+#>     bubble_sort(lst) 3625.430 3739.114 4294.959 3881.5525 4361.909
+#>  tr_bubble_sort(lst) 4056.978 4158.021 4550.006 4302.0615 4627.124
+#>     loop_bubble(lst)  118.545  127.785  135.504  130.1145  137.271
 #>        max neval
-#>  12112.025   100
-#>   7323.989   100
-#>    188.959   100
+#>  11338.354   100
+#>   7247.965   100
+#>    259.622   100
 boxplot(bm)
 ```
 

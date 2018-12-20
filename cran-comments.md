@@ -1,6 +1,12 @@
 
-* This is release 0.1.3 that only contains changes for rlang 0.3.0 compatibility.
-  It does not add any new functionality.
+# Main changes for version 0.1.3
+
+* Rewrote transformations to use the foolbox framework. (new dependency)
+* Made changes for rlang 0.3.0 compatibility. (updateded dependency)
+* Removed dependency on package pmatch. (removed dependency)
+  I still use pmatch 0.1.5 in the README examples, but I have no
+  other dependencies on the package.
+
 
 ## Test environments
 
