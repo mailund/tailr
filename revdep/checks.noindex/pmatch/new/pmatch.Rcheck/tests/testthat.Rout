@@ -19,9 +19,9 @@ Type 'q()' to quit R.
 > library(pmatch)
 > 
 > test_check("pmatch")
-══ testthat results  ═══════════════════════════════════════════════════
+══ testthat results  ═════════════════════════════════════════════════
 OK: 166 SKIPPED: 0 FAILED: 0
 > 
 > proc.time()
    user  system elapsed 
-  1.686   0.118   2.040 
+  1.238   0.098   1.388 

@@ -2,6 +2,5 @@
 
 export(can_loop_transform)
 export(can_loop_transform_)
-export(can_loop_transform_body)
 export(loop_transform)
-export(user_transform)
+import(foolbox)

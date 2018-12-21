@@ -47,12 +47,27 @@
 * checking files in ‘vignettes’ ... OK
 * checking examples ... OK
 * checking for unstated dependencies in ‘tests’ ... OK
-* checking tests ... OK
+* checking tests ... ERROR
   Running ‘testthat.R’
+Running the tests in ‘tests/testthat.R’ failed.
+Complete output:
+  > library(testthat)
+  > library(pmatch)
+  > 
+  > test_check("pmatch")
+  [31m──[39m [31m1. Failure: we can transform a function that contains a call to cas[39m
+  tailr::can_loop_transform(llength) isn't true.
+  
+  ══ testthat results  ═════════════════════════════════════════════════
+  OK: 168 SKIPPED: 0 FAILED: 1
+  1. Failure: we can transform a function that contains a call to cases (@test-transforms.R#62) 
+  
+  Error: testthat unit tests failed
+  Execution halted
 * checking for unstated dependencies in vignettes ... OK
 * checking package vignettes in ‘inst/doc’ ... OK
 * checking running R code from vignettes ... NONE
 * checking re-building of vignette outputs ... OK
 * checking PDF version of manual ... OK
 * DONE
-Status: OK
+Status: 1 ERROR
