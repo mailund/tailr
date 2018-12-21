@@ -19,8 +19,7 @@ Suggests:
     covr,
     testthat,
     microbenchmark,
-    compiler,
-    pmatch (>= 0.1.4)
+    compiler
 RoxygenNote: 6.1.1
 Roxygen: list(markdown = TRUE)
 URL: https://github.com/mailund/tailr
