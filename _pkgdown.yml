@@ -28,9 +28,3 @@ reference:
         - can_loop_transform
         - can_loop_transform_
         - can_loop_transform_body
-
-    - title: User-defined transformations
-      desc: >
-        Functions for customising transformations.
-      contents:
-        - user_transform

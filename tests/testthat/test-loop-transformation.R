@@ -128,43 +128,38 @@ test_that("we warn about eval expressions, but leave them alone", {
 })
 
 test_that("we handle local varibles when they are functions", {
-    if (!requireNamespace("pmatch", quietly = TRUE)) {
-        skip("pmatch not installed so we cannot run this test")
-        return()
-    }
-    library(pmatch)
+    cons <- function(car, cdr) list(car = car, cdr = cdr)
 
-    llist := NIL | CONS(car, cdr:llist)
-
-    llrev <- function(llist, acc = NIL) {
-        pmatch::cases(
-            llist,
-            NIL -> acc,
-            CONS(car, cdr) -> llrev(cdr, CONS(car, acc))
-        )
+    llrev <- function(llist, acc = NULL) {
+        if (is.null(llist)) {
+              acc
+          } else {
+              llrev(llist$cdr, list(llist$car, acc))
+          }
     }
     llrev <- tailr::loop_transform(llrev)
 
-    llmap <- function(llist, f, acc = NIL) {
-        pmatch::cases(
-            llist,
-            NIL -> llrev(acc),
-            CONS(car, cdr) -> llmap(cdr, f, CONS(f(car), acc))
-        )
+    llmap <- function(llist, f, acc = NULL) {
+        if (is.null(llist)) {
+              llrev(acc)
+          } else {
+              llmap(llist$cdr, f, cons(f(llist$car), acc))
+          }
     }
+
     expect_true(can_loop_transform(llmap))
 
     llmap <- loop_transform(llmap)
 
-    ll <- CONS(1, CONS(2, CONS(3, NIL)))
-    ll2 <- llmap(ll, function(x) 2*x)
+    ll <- cons(1, cons(2, cons(3, NULL)))
+    ll2 <- llmap(ll, function(x) 2 * x)
 
     llength <- function(llist, acc = 0) {
-        pmatch::cases(
-            llist,
-            NIL -> acc,
-            CONS(car, cdr) -> llength(cdr, acc + 1)
-        )
+        if (is.null(llist)) {
+              acc
+          } else {
+              llength(llist$cdr, acc + 1)
+          }
     }
     llength <- loop_transform(llength)
     as.list.llist <- function(x, all.names = FALSE, sorted = FALSE, ...) {

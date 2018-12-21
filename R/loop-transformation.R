@@ -3,7 +3,8 @@
 # we would otherwise get a complaint that `escape` is not defined. Everywhere
 # when we actually call a `escape` function, it is a continuation from calls to
 # `callCC`.
-escape <- function(x) x # nocov
+escape <- identity # nocov
+`!<-` <- function(x, value) value  # nocov -- also to silence notes
 
 ## Test for possibility of transformation #########################################
 
@@ -59,7 +60,7 @@ check_can_call_be_transformed <- function(call_name, call_arguments,
                     "are tail-recursive, so such expressions are not analysed and left alone in ",
                     "transformations."
                 ),
-                call = rlang::expr(eval(!!! call_arguments))
+                call = rlang::expr(eval(!!!call_arguments))
             )
             warning(msg)
             return(fun_call_allowed) # get out, and hope the user knows what he is doing...
@@ -105,7 +106,7 @@ check_can_call_be_transformed <- function(call_name, call_arguments,
 
 try_loop_transform <- function(fun) {
     fun_name <- as.character(rlang::get_expr(fun))
-    #fun_env <- rlang::get_env(fun)
+    # fun_env <- rlang::get_env(fun)
     fun <- rlang::eval_tidy(fun)
 
     check_call_callback <- function(expr, escape, topdown, ...) {
@@ -116,7 +117,7 @@ try_loop_transform <- function(fun) {
     }
     callCC(
         function(escape) {
-            fun %>% user_transform() %>%
+            fun %>%
                 foolbox::rewrite_with(
                     foolbox::rewrite_callbacks() %>%
                         foolbox::with_topdown_call_callback(check_call_callback),
@@ -153,12 +154,11 @@ can_loop_transform_ <- function(fun) {
 #' factorial_acc <- function(n, acc = 1)
 #'     if (n <= 1) acc else factorial_acc(n - 1, n * acc)
 #'
-#' can_loop_transform(factorial)     # FALSE -- and prints a warning
+#' can_loop_transform(factorial) # FALSE -- and prints a warning
 #' can_loop_transform(factorial_acc) # TRUE
 #'
-#' can_loop_transform_(rlang::quo(factorial))     # FALSE -- and prints a warning
+#' can_loop_transform_(rlang::quo(factorial)) # FALSE -- and prints a warning
 #' can_loop_transform_(rlang::quo(factorial_acc)) # TRUE
-#'
 #' @describeIn can_loop_transform This version quotes \code{fun} itself.
 #' @export
 can_loop_transform <- function(fun) {
@@ -213,7 +213,7 @@ make_returns_explicit_call <- function(call_expr, in_function_parameter) {
                 call_expr[[i + 1]] <- make_returns_explicit_expr(call_args[[i]], TRUE)
             }
             if (!in_function_parameter) { # if we weren't parameters, we are a value to be returned
-                call_expr <- rlang::expr(return(!! call_expr))
+                call_expr <- rlang::expr(return(!!call_expr))
             }
         }
     )
@@ -244,10 +244,11 @@ make_returns_explicit <- function(fn) {
 ## Simplify returns #####
 simplify_returns <- function(fn) {
     simplify_callback <- function(expr, ...) {
-        if (rlang::is_lang(expr[[2]]) && rlang::call_name(expr[[2]]) == "return")
-            expr[[2]]
-        else
-            expr
+        if (rlang::is_lang(expr[[2]]) && rlang::call_name(expr[[2]]) == "return") {
+              expr[[2]]
+          } else {
+              expr
+          }
     }
     fn %>% rewrite_with(
         rewrite_callbacks() %>% add_call_callback(`return`, simplify_callback)
@@ -272,10 +273,11 @@ translate_recursive_call <- function(recursive_call, info) {
 
 handle_recursive_returns <- function(fn, fun_name) {
     return_callback <- function(expr, ...) {
-        if (rlang::is_lang(expr[[2]]) && rlang::call_name(expr[[2]]) == fun_name)
-            translate_recursive_call(expr[[2]], list(fun = fn))
-        else
-            expr
+        if (rlang::is_lang(expr[[2]]) && rlang::call_name(expr[[2]]) == fun_name) {
+              translate_recursive_call(expr[[2]], list(fun = fn))
+          } else {
+              expr
+          }
     }
     fn %>% rewrite_with(
         rewrite_callbacks() %>% add_call_callback(`return`, return_callback)
@@ -298,7 +300,6 @@ returns_to_escapes <- function(fn) {
 #' @param fun_name The name of the function we are transforming
 #' @return The body of the transformed function.
 build_transformed_function <- function(fun, fun_name) {
-
     fun <- fun %>%
         make_returns_explicit() %>%
         simplify_returns() %>%

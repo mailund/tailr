@@ -31,10 +31,9 @@ factorial <- function(n)
 factorial_acc <- function(n, acc = 1)
     if (n <= 1) acc else factorial_acc(n - 1, n * acc)
 
-can_loop_transform(factorial)     # FALSE -- and prints a warning
+can_loop_transform(factorial) # FALSE -- and prints a warning
 can_loop_transform(factorial_acc) # TRUE
 
-can_loop_transform_(rlang::quo(factorial))     # FALSE -- and prints a warning
+can_loop_transform_(rlang::quo(factorial)) # FALSE -- and prints a warning
 can_loop_transform_(rlang::quo(factorial_acc)) # TRUE
-
 }
