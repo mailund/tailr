@@ -10,7 +10,8 @@ Language: en-GB
 LazyData: true
 ByteCompile: true
 Depends: 
-    R (>= 3.2),
+    R (>= 3.2)
+Imports:
     rlang (>= 0.3.0),
     glue,
     foolbox
