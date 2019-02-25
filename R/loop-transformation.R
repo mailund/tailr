@@ -89,14 +89,6 @@ check_can_call_be_transformed <- function(call_name, call_arguments,
 
         # All other calls
         {
-            if (call_name == fun_name && !fun_call_allowed) {
-                warn_msg <- simpleWarning(
-                    "The function cannot be transformed since it contains a recursive call inside a call.",
-                    call = NULL
-                )
-                warning(warn_msg)
-                escape(FALSE)
-            }
             return(FALSE) # inside calls we do not allow recursive calls
         }
     )
@@ -109,10 +101,23 @@ try_loop_transform <- function(fun) {
     # fun_env <- rlang::get_env(fun)
     fun <- rlang::eval_tidy(fun)
 
-    check_call_callback <- function(expr, escape, topdown, ...) {
+    check_call_callback <- function(expr, escape, topdown, skip, ...) {
         call_name <- rlang::call_name(expr)
         call_arguments <- rlang::call_args(expr)
         fun_call_allowed <- topdown
+
+        if (call_name == fun_name) {
+            if (!fun_call_allowed) {
+                warn_msg <- simpleWarning(
+                    "The function cannot be transformed since it contains a recursive call inside a call.",
+                    call = NULL
+                )
+                warning(warn_msg)
+                escape(FALSE)
+            } else {
+                skip(expr)
+            }
+        }
         check_can_call_be_transformed(call_name, call_arguments, fun_name, fun_call_allowed, escape)
     }
     callCC(
