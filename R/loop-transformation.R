@@ -106,6 +106,10 @@ try_loop_transform <- function(fun) {
         call_arguments <- rlang::call_args(expr)
         fun_call_allowed <- topdown
 
+        if (call_name == "function") {
+            skip(expr) # whatever we do when defining a functio won't be executed here
+        }
+
         if (call_name == fun_name) {
             if (!fun_call_allowed) {
                 warn_msg <- simpleWarning(
@@ -389,3 +393,18 @@ loop_transform <- function(fun, byte_compile = TRUE, set_srcref = TRUE) {
 
     result
 }
+
+#' Captures the closure in a function environment
+#'
+#' This is necessary to implement continuation-passing-style
+#' tail-recursion.
+#'
+#' @param .func The function to capture a closure for.
+#'
+#' @export
+capture_closure <- function(.func) {
+    captured_env <- rlang::env_clone(rlang::caller_env())
+    environment(.func) <- captured_env
+    .func
+}
+
